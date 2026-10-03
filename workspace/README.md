@@ -1,7 +1,9 @@
 # 高精地图瓦片 · 分区发布与车辆路线快照服务
 
 零第三方依赖（Python 3.11 标准库 + 原生 HTML/JS），实现"地图编辑 → 接缝/跨区路线验证
-→ 按区域代际发布 → 车辆路线快照固定 → 紧急补丁安全过渡 → 离线追赶"的完整闭环。
+→ 按区域代际发布 → 车辆路线快照固定 → 紧急补丁安全过渡 → 离线追赶"的完整闭环，
+并附带**面向监管审计的只读时序证据查询**（哈希链事件导入 → 时刻空间状态重建 →
+持久检查点续算 → 隔离分支演算 → 审计档案导出）。
 
 ## 启动
 
@@ -38,6 +40,17 @@ python3 server.py 8080          # 打开 http://localhost:8080
 **离线追赶**：车辆带最后确认事件号重连，服务回放全部错过事件，给出唯一当前版本与
 在途快照预警；同步本身幂等（事件检查点持久化）。
 
+## 监管审计（只读时序证据）
+
+| 概念 | 说明 |
+|---|---|
+| 证据事件 `audit event` | 运维导入的车辆运行事件：`seq`（序号）+ `source`（来源）+ `kind` + `payload` + `digest`（对 seq/source/kind/ts/payload/parent_digest 的 sha256）+ `parent_digest`，按车辆构成哈希链 |
+| 导入批次 `import` | 整批原子校验：**序号跳跃 / 重复事件 / 摘要被改写 / 父事件缺失** 一律拒绝且不写入任何事件；同一 `import_key` 再次提交返回首次判定（接受或拒绝都幂等） |
+| 时刻重建 `reconstruct` | 只读重演某序号时刻的空间状态：版本描述（version/descriptor_hash/基线代际/补丁）、瓦片摘要、道路管制、行驶步骤与进度；网页与 CLI 均可查看 |
+| 检查点 `checkpoint` | 审计员把某时刻的重建状态持久化（含 ctx_digest）；长序列重建从最近检查点续算，导入也可以检查点摘要为父锚点 |
+| 隔离分支 `branch` | 从已确认检查点出发演算**一次**假设：`version_switch`（切到指定区域代际，默认保持当时管制）或 `patch_revoke`（撤销一项道路管制）；只读线上数据重算路线，结果存为新档案 |
+| 审计档案 `archive` | 查询/分支/导出的唯一产物（AR-xxxx，内容带 sha256）；**线上代际、车辆当前记录、原有事件链永不被审计操作改变** |
+
 ## API（均为 JSON，前缀 `/api`）
 
 | 方法 | 路径 | 作用 |
@@ -56,7 +69,14 @@ python3 server.py 8080          # 打开 http://localhost:8080
 | POST | `/snapshots/{id}/adopt-reroute` | **仅 at_node** 可过渡到绕行子快照 |
 | POST | `/snapshots/{id}/complete` | 完成行程 |
 | GET | `/vehicles/{id}` · `/vehicles/{id}/sync?last_event_id=N` | 车辆快照链 · 离线追赶 |
-| GET | `/view?mode=published\|candidate\|snapshot&ref=` | 审查页地图数据（瓦片/接缝/走廊/路线） |
+| GET | `/view?mode=published\|candidate\|snapshot\|audit&ref=` | 审查页地图数据（audit 时 ref 为 `车辆@序号`） |
+| POST | `/audit/imports` | 导入证据批次 `{import_key, vehicle_id, events[]}`（幂等键，整批原子） |
+| GET | `/audit/imports` · `/audit/events?vehicle_id=` | 导入判定记录 · 证据链事件 |
+| GET | `/audit/reconstruct?vehicle_id=&seq=` | 重建指定时刻空间状态（只读） |
+| GET/POST | `/audit/checkpoints` | 检查点列表 · 确认 `{vehicle_id, seq, note}` |
+| GET/POST | `/audit/branches` | 分支列表 · 从检查点演算 `{scenario: version_switch\|patch_revoke}` |
+| GET/POST | `/audit/exports` · GET `/audit/archives/{id}` | 导出档案（reconstruction/branch/chain）· 档案内容 |
+| GET | `/audit/sample?vehicle_id=` | 生成可导入的示例批次（不落盘） |
 
 ## 页面
 
@@ -65,6 +85,9 @@ python3 server.py 8080          # 打开 http://localhost:8080
 - **🚨 封路补丁**：勾选车道生成补丁（自动给出兼容/不兼容与绕行），激活/撤销。
 - **🚗 路线复现**：请求路线、模拟"进入车道/到达节点"、封路预警、节点处安全过渡、
   行程完成、离线追赶事件回放。
+- **🧾 监管审计**：导入带摘要链的车辆运行事件（幂等键、四类篡改拒绝）、按序号重建
+  时刻空间状态（地图 + 版本描述 + 瓦片摘要 + 行驶步骤）、确认持久检查点、从检查点
+  演算版本切换/管制撤销隔离分支、导出带摘要的审计档案。
 
 ## CLI：route_replay.py
 
@@ -81,7 +104,20 @@ python3 server.py 8080          # 打开 http://localhost:8080
 ./route_replay.py validate RC-0003
 ./route_replay.py publish RC-0002
 ./route_replay.py sync VH-02 0
+
+# 监管审计（只读）
+./route_replay.py audit-import batch.json              # 导入证据批次（幂等键）
+./route_replay.py audit-reconstruct VH-01 4            # 重建序号 4 的空间状态
+./route_replay.py audit-checkpoint VH-01 4 "抽查确认"  # 确认持久检查点
+./route_replay.py audit-branch CP-0001 patch-revoke P-0001     # 隔离分支：撤销管制
+./route_replay.py audit-branch CP-0001 version-switch north=1  # 隔离分支：版本切换
+./route_replay.py audit-export reconstruction VH-01 4  # 导出审计档案
+./route_replay.py audit-events VH-01                   # 证据链事件
+./route_replay.py audit-archives                       # 档案清单
 ```
+
+`examples/make_audit_batch.py` 可从车辆实时快照链生成一批合法证据事件
+（含连续序号与摘要链），供演示导入。
 
 ## 推荐演示路径（种子已备好两个候选）
 
@@ -94,13 +130,18 @@ python3 server.py 8080          # 打开 http://localhost:8080
 6. 回路线页：S-0001 仍是原版本；点"进入车道"后尝试"采用绕行"→ 被拒；
    点"到达节点"后采用 → 生成子快照 S-0002（版本带 `+P-0001`，全程无车道中途拼接）。
 7. 撤销补丁：S-0002 历史复算仍封闭，新路线不再封闭；离线追赶一次性回放所有事件。
+8. 监管审计：为 VH-01 生成并导入证据批次 → 重建序号 2/4 时刻 → 确认 CP-0001/CP-0002
+   → 从 CP-0002 演算"撤销 P-0001"与"切到 north=1"两条隔离分支 → 导出档案；
+   篡改/跳号/重复/缺父四类非法批次全部被拒，线上代际与事件链纹丝不动（demo.sh 12–22 步）。
 
 ## 文件
 
 ```
 engine.py          领域引擎：拓扑图/Dijkstra、校验、发布、补丁、快照、原子持久化
+audit.py           审计引擎：证据链校验/时刻重建/检查点/隔离分支/档案（只读线上状态）
 server.py          标准库 HTTP API + 静态文件
-route_replay.py    路线复现/生命周期 CLI
-static/            审查页（index.html / app.js / styles.css）
-data/mapstate.json 原子落盘的单一事实源（运行后生成）
+route_replay.py    路线复现/生命周期 + 审计 CLI
+static/            审查页（index.html / app.js / styles.css，含监管审计页签）
+examples/          make_audit_batch.py 证据批次生成器
+data/mapstate.json 原子落盘的单一事实源（运行后生成；审计数据隔离在 audit 键下）
 ```

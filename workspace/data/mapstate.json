@@ -724,7 +724,7 @@
       },
       "note": "初始地图（四区瓦，南北两个发布区域）",
       "created_by": "system",
-      "created_at": "2026-10-02T06:48:18+00:00",
+      "created_at": "2026-10-03T09:12:41+00:00",
       "based_on_generations": {
         "north": 0,
         "south": 0
@@ -734,7 +734,7 @@
         "status": "passed",
         "errors": [],
         "warnings": [],
-        "checked_at": "2026-10-02T06:48:18+00:00",
+        "checked_at": "2026-10-03T09:12:41+00:00",
         "baseline_generations": {
           "north": 0,
           "south": 0
@@ -753,12 +753,21 @@
       },
       "note": "北区内部新增 n-e 联络车道（边界拓扑不变，应通过校验）",
       "created_by": "editor",
-      "created_at": "2026-10-02T06:48:18+00:00",
+      "created_at": "2026-10-03T09:12:41+00:00",
       "based_on_generations": {
         "north": 1
       },
-      "status": "draft",
-      "validation": null
+      "status": "published",
+      "validation": {
+        "status": "passed",
+        "errors": [],
+        "warnings": [],
+        "checked_at": "2026-10-03T09:12:41+00:00",
+        "baseline_generations": {
+          "north": 1
+        }
+      },
+      "published_as": "REL-0002"
     },
     "RC-0003": {
       "candidate_id": "RC-0003",
@@ -771,12 +780,67 @@
       },
       "note": "北区改稿：南端口限速改 80 且删除西入口车道（接缝限速+跨区走廊必失败）",
       "created_by": "editor",
-      "created_at": "2026-10-02T06:48:18+00:00",
+      "created_at": "2026-10-03T09:12:41+00:00",
       "based_on_generations": {
         "north": 1
       },
-      "status": "draft",
-      "validation": null
+      "status": "rejected",
+      "validation": {
+        "status": "failed",
+        "errors": [
+          {
+            "code": "SEAM_PROFILE_MISMATCH",
+            "where": "A00",
+            "message": "接缝限速不一致 80 vs 60 (@A00:pe)",
+            "port": "pe",
+            "attr": "speed",
+            "a": 80,
+            "b": 60
+          },
+          {
+            "code": "SEAM_PROFILE_MISMATCH",
+            "where": "A00",
+            "message": "接缝限速不一致 80 vs 60 (@A00:ps)",
+            "port": "ps",
+            "attr": "speed",
+            "a": 80,
+            "b": 60
+          },
+          {
+            "code": "SEAM_PROFILE_MISMATCH",
+            "where": "A01",
+            "message": "接缝限速不一致 60 vs 80 (@A01:pw)",
+            "port": "pw",
+            "attr": "speed",
+            "a": 60,
+            "b": 80
+          },
+          {
+            "code": "SEAM_PROFILE_MISMATCH",
+            "where": "B00",
+            "message": "接缝限速不一致 60 vs 80 (@B00:pn)",
+            "port": "pn",
+            "attr": "speed",
+            "a": 60,
+            "b": 80
+          },
+          {
+            "code": "ROUTE_BROKEN",
+            "where": "C1",
+            "message": "跨区走廊 C1 无法贯通: A00/w -> B01/e",
+            "corridor": "C1",
+            "segment": [
+              "A00/w",
+              "B01/e"
+            ]
+          }
+        ],
+        "warnings": [],
+        "checked_at": "2026-10-03T09:12:41+00:00",
+        "baseline_generations": {
+          "north": 1
+        }
+      }
     }
   },
   "releases": [
@@ -802,23 +866,480 @@
         "south": null
       },
       "note": "初始发布",
-      "created_at": "2026-10-02T06:48:18+00:00"
+      "created_at": "2026-10-03T09:12:41+00:00"
+    },
+    {
+      "release_id": "REL-0002",
+      "candidate_id": "RC-0002",
+      "regions": [
+        "north"
+      ],
+      "generations": {
+        "north": 2
+      },
+      "tiles": {
+        "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+        "A01": "sha256:406900a37cc808cc39ce1df6c60d27c5bf581bf6a10f5e56f1ee3a818c079372"
+      },
+      "parent_releases": {
+        "north": "REL-0001"
+      },
+      "note": "北区内部新增 n-e 联络车道（边界拓扑不变，应通过校验）",
+      "created_at": "2026-10-03T09:12:41+00:00"
     }
   ],
   "region_heads": {
-    "north": "REL-0001",
+    "north": "REL-0002",
     "south": "REL-0001"
   },
   "region_gen": {
-    "north": 1,
+    "north": 2,
     "south": 1
   },
-  "patches": {},
-  "snapshots": {},
+  "patches": {
+    "P-0001": {
+      "patch_id": "P-0001",
+      "status": "revoked",
+      "priority": 100,
+      "kind": "closure",
+      "scope": {
+        "tiles": {
+          "A00": [
+            "lce"
+          ]
+        }
+      },
+      "reason": "K12 事故临时管制",
+      "base_version": {
+        "base": {
+          "north": {
+            "release_id": "REL-0002",
+            "generation": 2
+          },
+          "south": {
+            "release_id": "REL-0001",
+            "generation": 1
+          }
+        },
+        "tile_hashes": {
+          "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc"
+        }
+      },
+      "transition": {
+        "safe_state": "complete_current_lane"
+      },
+      "detour": {
+        "A00/lce": [
+          {
+            "kind": "lane",
+            "tile": "A00",
+            "lane": "lcn",
+            "speed": 60,
+            "from_tile": "A00",
+            "from_node": "c",
+            "to_tile": "A00",
+            "to_node": "n"
+          },
+          {
+            "kind": "lane",
+            "tile": "A00",
+            "lane": "lcne",
+            "speed": 50,
+            "from_tile": "A00",
+            "from_node": "n",
+            "to_tile": "A00",
+            "to_node": "e"
+          }
+        ]
+      },
+      "compatibility": {
+        "status": "compatible",
+        "reason": "基础版本中存在目标车道，且封闭后存在节点间绕行路径",
+        "checked_at": "2026-10-03T09:12:41+00:00",
+        "base_descriptor": "north=2/south=1"
+      },
+      "content_hash": "sha256:bad9547394286d4a9c853b542fb06ae3cbe99a7778fb5fbddd165d36b8e30f33",
+      "created_by": "ops",
+      "created_at": "2026-10-03T09:12:41+00:00",
+      "activated_at": "2026-10-03T09:12:41+00:00",
+      "revoked_at": "2026-10-03T09:12:41+00:00",
+      "revoke_reason": "管制解除"
+    }
+  },
+  "snapshots": {
+    "S-0001": {
+      "snapshot_id": "S-0001",
+      "vehicle_id": "VH-01",
+      "from_node": "A00/w",
+      "to_node": "B01/e",
+      "status": "superseded",
+      "created_at": "2026-10-03T09:12:41+00:00",
+      "version": {
+        "version": "north=2/south=1",
+        "descriptor_hash": "sha256:ea46194920352b089731cd3d03baf3c6bde0f883236dea52770135a7caa74605",
+        "base": {
+          "north": {
+            "release_id": "REL-0002",
+            "generation": 2
+          },
+          "south": {
+            "release_id": "REL-0001",
+            "generation": 1
+          }
+        },
+        "patches": []
+      },
+      "tiles": {
+        "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+        "A01": "sha256:406900a37cc808cc39ce1df6c60d27c5bf581bf6a10f5e56f1ee3a818c079372",
+        "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+      },
+      "overlays": {},
+      "route": [
+        {
+          "kind": "lane",
+          "tile": "A00",
+          "lane": "lcw",
+          "speed": 60,
+          "from_tile": "A00",
+          "from_node": "w",
+          "to_tile": "A00",
+          "to_node": "c"
+        },
+        {
+          "kind": "lane",
+          "tile": "A00",
+          "lane": "lce",
+          "speed": 60,
+          "from_tile": "A00",
+          "from_node": "c",
+          "to_tile": "A00",
+          "to_node": "e"
+        },
+        {
+          "kind": "seam",
+          "from_tile": "A00",
+          "from_node": "e",
+          "to_tile": "A01",
+          "to_node": "w",
+          "via_port": "A00:pe~A01:pw"
+        },
+        {
+          "kind": "lane",
+          "tile": "A01",
+          "lane": "lcw",
+          "speed": 60,
+          "from_tile": "A01",
+          "from_node": "w",
+          "to_tile": "A01",
+          "to_node": "c"
+        },
+        {
+          "kind": "lane",
+          "tile": "A01",
+          "lane": "lcs",
+          "speed": 60,
+          "from_tile": "A01",
+          "from_node": "c",
+          "to_tile": "A01",
+          "to_node": "s"
+        },
+        {
+          "kind": "seam",
+          "from_tile": "A01",
+          "from_node": "s",
+          "to_tile": "B01",
+          "to_node": "n",
+          "via_port": "A01:ps~B01:pn"
+        },
+        {
+          "kind": "lane",
+          "tile": "B01",
+          "lane": "lcn",
+          "speed": 60,
+          "from_tile": "B01",
+          "from_node": "n",
+          "to_tile": "B01",
+          "to_node": "c"
+        },
+        {
+          "kind": "lane",
+          "tile": "B01",
+          "lane": "lce",
+          "speed": 60,
+          "from_tile": "B01",
+          "from_node": "c",
+          "to_tile": "B01",
+          "to_node": "e"
+        }
+      ],
+      "progress": {
+        "step": 1,
+        "state": "at_node",
+        "ts": "2026-10-03T09:12:41+00:00"
+      },
+      "parent_snapshot_id": null,
+      "children": [
+        "S-0002"
+      ],
+      "completed_at": null
+    },
+    "S-0002": {
+      "snapshot_id": "S-0002",
+      "vehicle_id": "VH-01",
+      "from_node": "A00/c",
+      "to_node": "B01/e",
+      "status": "active",
+      "created_at": "2026-10-03T09:12:41+00:00",
+      "version": {
+        "version": "north=2/south=1+P-0001[p100]",
+        "descriptor_hash": "sha256:5032668ec77344ea5b26bb0bdbf1f32518d5e2385ff7657b214c056f98d3902a",
+        "base": {
+          "north": {
+            "release_id": "REL-0002",
+            "generation": 2
+          },
+          "south": {
+            "release_id": "REL-0001",
+            "generation": 1
+          }
+        },
+        "patches": [
+          {
+            "patch_id": "P-0001",
+            "priority": 100,
+            "scope": {
+              "tiles": {
+                "A00": [
+                  "lce"
+                ]
+              }
+            },
+            "reason": "K12 事故临时管制",
+            "content_hash": "sha256:bad9547394286d4a9c853b542fb06ae3cbe99a7778fb5fbddd165d36b8e30f33",
+            "activated_at": "2026-10-03T09:12:41+00:00"
+          }
+        ]
+      },
+      "tiles": {
+        "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+        "B00": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17",
+        "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+      },
+      "overlays": {
+        "A00": {
+          "lce": {
+            "closed": true,
+            "patch_id": "P-0001",
+            "reason": "K12 事故临时管制"
+          }
+        }
+      },
+      "route": [
+        {
+          "kind": "lane",
+          "tile": "A00",
+          "lane": "lcs",
+          "speed": 60,
+          "from_tile": "A00",
+          "from_node": "c",
+          "to_tile": "A00",
+          "to_node": "s"
+        },
+        {
+          "kind": "seam",
+          "from_tile": "A00",
+          "from_node": "s",
+          "to_tile": "B00",
+          "to_node": "n",
+          "via_port": "A00:ps~B00:pn"
+        },
+        {
+          "kind": "lane",
+          "tile": "B00",
+          "lane": "lcn",
+          "speed": 60,
+          "from_tile": "B00",
+          "from_node": "n",
+          "to_tile": "B00",
+          "to_node": "c"
+        },
+        {
+          "kind": "lane",
+          "tile": "B00",
+          "lane": "lce",
+          "speed": 60,
+          "from_tile": "B00",
+          "from_node": "c",
+          "to_tile": "B00",
+          "to_node": "e"
+        },
+        {
+          "kind": "seam",
+          "from_tile": "B00",
+          "from_node": "e",
+          "to_tile": "B01",
+          "to_node": "w",
+          "via_port": "B00:pe~B01:pw"
+        },
+        {
+          "kind": "lane",
+          "tile": "B01",
+          "lane": "lcw",
+          "speed": 60,
+          "from_tile": "B01",
+          "from_node": "w",
+          "to_tile": "B01",
+          "to_node": "c"
+        },
+        {
+          "kind": "lane",
+          "tile": "B01",
+          "lane": "lce",
+          "speed": 60,
+          "from_tile": "B01",
+          "from_node": "c",
+          "to_tile": "B01",
+          "to_node": "e"
+        }
+      ],
+      "progress": {
+        "step": 0,
+        "state": "at_node"
+      },
+      "parent_snapshot_id": "S-0001",
+      "children": [],
+      "completed_at": null,
+      "adopted_reason": "emergency_patch_reroute"
+    },
+    "S-0003": {
+      "snapshot_id": "S-0003",
+      "vehicle_id": "VH-02",
+      "from_node": "A01/n",
+      "to_node": "B00/s",
+      "status": "active",
+      "created_at": "2026-10-03T09:12:41+00:00",
+      "version": {
+        "version": "north=2/south=1",
+        "descriptor_hash": "sha256:ea46194920352b089731cd3d03baf3c6bde0f883236dea52770135a7caa74605",
+        "base": {
+          "north": {
+            "release_id": "REL-0002",
+            "generation": 2
+          },
+          "south": {
+            "release_id": "REL-0001",
+            "generation": 1
+          }
+        },
+        "patches": []
+      },
+      "tiles": {
+        "A01": "sha256:406900a37cc808cc39ce1df6c60d27c5bf581bf6a10f5e56f1ee3a818c079372",
+        "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f",
+        "B00": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17"
+      },
+      "overlays": {},
+      "route": [
+        {
+          "kind": "lane",
+          "tile": "A01",
+          "lane": "lcn",
+          "speed": 60,
+          "from_tile": "A01",
+          "from_node": "n",
+          "to_tile": "A01",
+          "to_node": "c"
+        },
+        {
+          "kind": "lane",
+          "tile": "A01",
+          "lane": "lcs",
+          "speed": 60,
+          "from_tile": "A01",
+          "from_node": "c",
+          "to_tile": "A01",
+          "to_node": "s"
+        },
+        {
+          "kind": "seam",
+          "from_tile": "A01",
+          "from_node": "s",
+          "to_tile": "B01",
+          "to_node": "n",
+          "via_port": "A01:ps~B01:pn"
+        },
+        {
+          "kind": "lane",
+          "tile": "B01",
+          "lane": "lcn",
+          "speed": 60,
+          "from_tile": "B01",
+          "from_node": "n",
+          "to_tile": "B01",
+          "to_node": "c"
+        },
+        {
+          "kind": "lane",
+          "tile": "B01",
+          "lane": "lcw",
+          "speed": 60,
+          "from_tile": "B01",
+          "from_node": "c",
+          "to_tile": "B01",
+          "to_node": "w"
+        },
+        {
+          "kind": "seam",
+          "from_tile": "B01",
+          "from_node": "w",
+          "to_tile": "B00",
+          "to_node": "e",
+          "via_port": "B01:pw~B00:pe"
+        },
+        {
+          "kind": "lane",
+          "tile": "B00",
+          "lane": "lce",
+          "speed": 60,
+          "from_tile": "B00",
+          "from_node": "e",
+          "to_tile": "B00",
+          "to_node": "c"
+        },
+        {
+          "kind": "lane",
+          "tile": "B00",
+          "lane": "lcs",
+          "speed": 60,
+          "from_tile": "B00",
+          "from_node": "c",
+          "to_tile": "B00",
+          "to_node": "s"
+        }
+      ],
+      "progress": {
+        "step": 0,
+        "state": "at_node"
+      },
+      "parent_snapshot_id": null,
+      "children": [],
+      "completed_at": null
+    }
+  },
   "vehicles": {
     "VH-01": {
-      "snapshots": [],
+      "snapshots": [
+        "S-0001",
+        "S-0002"
+      ],
       "last_event_id": 0
+    },
+    "VH-02": {
+      "snapshots": [
+        "S-0003"
+      ],
+      "last_event_id": 8
     }
   },
   "corridors": [
@@ -842,17 +1363,1534 @@
   "events": [
     {
       "event_id": 1,
-      "ts": "2026-10-02T06:48:18+00:00",
+      "ts": "2026-10-03T09:12:41+00:00",
       "type": "SYSTEM_SEEDED",
       "summary": "初始地图与示例候选已生成",
       "ref": "REL-0001"
+    },
+    {
+      "event_id": 2,
+      "ts": "2026-10-03T09:12:41+00:00",
+      "type": "RELEASE_PUBLISHED",
+      "summary": "发布 REL-0002：north 第 2 代",
+      "ref": "REL-0002"
+    },
+    {
+      "event_id": 3,
+      "ts": "2026-10-03T09:12:41+00:00",
+      "type": "SNAPSHOT_PINNED",
+      "summary": "车辆 VH-01 固定快照 S-0001（版本 north=2/south=1，3 瓦片，8 步）",
+      "ref": "S-0001"
+    },
+    {
+      "event_id": 4,
+      "ts": "2026-10-03T09:12:41+00:00",
+      "type": "PATCH_PROPOSED",
+      "summary": "紧急补丁 P-0001 提交（compatible）",
+      "ref": "P-0001"
+    },
+    {
+      "event_id": 5,
+      "ts": "2026-10-03T09:12:41+00:00",
+      "type": "PATCH_ACTIVATED",
+      "summary": "紧急补丁 P-0001 生效：A00/lce（兼容 north=2/south=1，车辆须在节点处过渡）",
+      "ref": "P-0001"
+    },
+    {
+      "event_id": 6,
+      "ts": "2026-10-03T09:12:41+00:00",
+      "type": "SNAPSHOT_SUPERSEDED",
+      "summary": "车辆 VH-01 在节点处由 S-0001 安全过渡至 S-0002（新版本 north=2/south=1+P-0001[p100]，全程未拼接拓扑）",
+      "ref": "S-0002"
+    },
+    {
+      "event_id": 7,
+      "ts": "2026-10-03T09:12:41+00:00",
+      "type": "PATCH_REVOKED",
+      "summary": "紧急补丁 P-0001 已撤销，车道恢复通行（既有在途快照仍保持其固定版本）",
+      "ref": "P-0001"
+    },
+    {
+      "event_id": 8,
+      "ts": "2026-10-03T09:12:41+00:00",
+      "type": "SNAPSHOT_PINNED",
+      "summary": "车辆 VH-02 固定快照 S-0003（版本 north=2/south=1，3 瓦片，8 步）",
+      "ref": "S-0003"
     }
   ],
   "seq": {
     "candidate": 3,
-    "release": 1,
-    "patch": 0,
-    "snapshot": 0,
-    "event": 1
+    "release": 2,
+    "patch": 1,
+    "snapshot": 3,
+    "event": 8
+  },
+  "audit": {
+    "events": {
+      "VH-01": [
+        {
+          "seq": 1,
+          "source": "obu/VH-01",
+          "kind": "snapshot_pinned",
+          "ts": "2026-10-03T09:12:41+00:00",
+          "payload": {
+            "snapshot_id": "S-0001",
+            "version": {
+              "version": "north=2/south=1",
+              "descriptor_hash": "sha256:ea46194920352b089731cd3d03baf3c6bde0f883236dea52770135a7caa74605",
+              "base": {
+                "north": {
+                  "release_id": "REL-0002",
+                  "generation": 2
+                },
+                "south": {
+                  "release_id": "REL-0001",
+                  "generation": 1
+                }
+              },
+              "patches": []
+            },
+            "tiles": {
+              "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+              "A01": "sha256:406900a37cc808cc39ce1df6c60d27c5bf581bf6a10f5e56f1ee3a818c079372",
+              "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+            },
+            "route": [
+              {
+                "kind": "lane",
+                "tile": "A00",
+                "lane": "lcw",
+                "speed": 60,
+                "from_tile": "A00",
+                "from_node": "w",
+                "to_tile": "A00",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "A00",
+                "lane": "lce",
+                "speed": 60,
+                "from_tile": "A00",
+                "from_node": "c",
+                "to_tile": "A00",
+                "to_node": "e"
+              },
+              {
+                "kind": "seam",
+                "from_tile": "A00",
+                "from_node": "e",
+                "to_tile": "A01",
+                "to_node": "w",
+                "via_port": "A00:pe~A01:pw"
+              },
+              {
+                "kind": "lane",
+                "tile": "A01",
+                "lane": "lcw",
+                "speed": 60,
+                "from_tile": "A01",
+                "from_node": "w",
+                "to_tile": "A01",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "A01",
+                "lane": "lcs",
+                "speed": 60,
+                "from_tile": "A01",
+                "from_node": "c",
+                "to_tile": "A01",
+                "to_node": "s"
+              },
+              {
+                "kind": "seam",
+                "from_tile": "A01",
+                "from_node": "s",
+                "to_tile": "B01",
+                "to_node": "n",
+                "via_port": "A01:ps~B01:pn"
+              },
+              {
+                "kind": "lane",
+                "tile": "B01",
+                "lane": "lcn",
+                "speed": 60,
+                "from_tile": "B01",
+                "from_node": "n",
+                "to_tile": "B01",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "B01",
+                "lane": "lce",
+                "speed": 60,
+                "from_tile": "B01",
+                "from_node": "c",
+                "to_tile": "B01",
+                "to_node": "e"
+              }
+            ],
+            "to_node": "B01/e",
+            "closures": {}
+          },
+          "digest": "sha256:95a93b34b9b99f432632b4fce40859dd262b12f57a47820acb42b25deec67fd7",
+          "parent_digest": null
+        },
+        {
+          "seq": 2,
+          "source": "obu/VH-01",
+          "kind": "progress",
+          "ts": "2026-10-03T09:12:41+00:00",
+          "payload": {
+            "step": 1,
+            "state": "at_node"
+          },
+          "digest": "sha256:3516a842826de4434b13b6353c4eaf29eaf45234fe92b0f517d6466ed503d422",
+          "parent_digest": "sha256:95a93b34b9b99f432632b4fce40859dd262b12f57a47820acb42b25deec67fd7"
+        },
+        {
+          "seq": 3,
+          "source": "obu/VH-01",
+          "kind": "patch_notice",
+          "ts": "2026-10-03T09:12:41+00:00",
+          "payload": {
+            "patch_id": "P-0001",
+            "action": "activated",
+            "closures": {
+              "A00": {
+                "lce": {
+                  "reason": "K12 事故临时管制"
+                }
+              }
+            }
+          },
+          "digest": "sha256:b5e9af8224e53ac9f759c604b7f64126b19f1a88db8e8a25b951ebaad724efce",
+          "parent_digest": "sha256:3516a842826de4434b13b6353c4eaf29eaf45234fe92b0f517d6466ed503d422"
+        },
+        {
+          "seq": 4,
+          "source": "obu/VH-01",
+          "kind": "version_adopted",
+          "ts": "2026-10-03T09:12:41+00:00",
+          "payload": {
+            "snapshot_id": "S-0002",
+            "version": {
+              "version": "north=2/south=1+P-0001[p100]",
+              "descriptor_hash": "sha256:5032668ec77344ea5b26bb0bdbf1f32518d5e2385ff7657b214c056f98d3902a",
+              "base": {
+                "north": {
+                  "release_id": "REL-0002",
+                  "generation": 2
+                },
+                "south": {
+                  "release_id": "REL-0001",
+                  "generation": 1
+                }
+              },
+              "patches": [
+                {
+                  "patch_id": "P-0001",
+                  "priority": 100,
+                  "scope": {
+                    "tiles": {
+                      "A00": [
+                        "lce"
+                      ]
+                    }
+                  },
+                  "reason": "K12 事故临时管制",
+                  "content_hash": "sha256:bad9547394286d4a9c853b542fb06ae3cbe99a7778fb5fbddd165d36b8e30f33",
+                  "activated_at": "2026-10-03T09:12:41+00:00"
+                }
+              ]
+            },
+            "tiles": {
+              "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+              "B00": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17",
+              "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+            },
+            "route": [
+              {
+                "kind": "lane",
+                "tile": "A00",
+                "lane": "lcs",
+                "speed": 60,
+                "from_tile": "A00",
+                "from_node": "c",
+                "to_tile": "A00",
+                "to_node": "s"
+              },
+              {
+                "kind": "seam",
+                "from_tile": "A00",
+                "from_node": "s",
+                "to_tile": "B00",
+                "to_node": "n",
+                "via_port": "A00:ps~B00:pn"
+              },
+              {
+                "kind": "lane",
+                "tile": "B00",
+                "lane": "lcn",
+                "speed": 60,
+                "from_tile": "B00",
+                "from_node": "n",
+                "to_tile": "B00",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "B00",
+                "lane": "lce",
+                "speed": 60,
+                "from_tile": "B00",
+                "from_node": "c",
+                "to_tile": "B00",
+                "to_node": "e"
+              },
+              {
+                "kind": "seam",
+                "from_tile": "B00",
+                "from_node": "e",
+                "to_tile": "B01",
+                "to_node": "w",
+                "via_port": "B00:pe~B01:pw"
+              },
+              {
+                "kind": "lane",
+                "tile": "B01",
+                "lane": "lcw",
+                "speed": 60,
+                "from_tile": "B01",
+                "from_node": "w",
+                "to_tile": "B01",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "B01",
+                "lane": "lce",
+                "speed": 60,
+                "from_tile": "B01",
+                "from_node": "c",
+                "to_tile": "B01",
+                "to_node": "e"
+              }
+            ],
+            "to_node": "B01/e",
+            "closures": {
+              "A00": {
+                "lce": {
+                  "closed": true,
+                  "patch_id": "P-0001",
+                  "reason": "K12 事故临时管制"
+                }
+              }
+            }
+          },
+          "digest": "sha256:d7d6ccc0edaa7e8ac4b8b9d0a028c1b1b837934b1a3ffb4dedd00ecd453d85a7",
+          "parent_digest": "sha256:b5e9af8224e53ac9f759c604b7f64126b19f1a88db8e8a25b951ebaad724efce"
+        }
+      ]
+    },
+    "imports": {
+      "OPS-2026-10-03-001": {
+        "verdict": "accepted",
+        "import_key": "OPS-2026-10-03-001",
+        "vehicle_id": "VH-01",
+        "accepted_events": 4,
+        "first_seq": 1,
+        "last_seq": 4,
+        "chain_head_digest": "sha256:d7d6ccc0edaa7e8ac4b8b9d0a028c1b1b837934b1a3ffb4dedd00ecd453d85a7",
+        "received_at": "2026-10-03T09:12:41+00:00",
+        "http_status": 201
+      },
+      "OPS-BAD-DIGEST": {
+        "verdict": "rejected",
+        "import_key": "OPS-BAD-DIGEST",
+        "vehicle_id": "VH-01",
+        "received_at": "2026-10-03T09:12:41+00:00",
+        "error": {
+          "code": "AUDIT_DIGEST_MISMATCH",
+          "message": "序号 5 摘要校验失败：摘要与内容不符，事件可能被改写",
+          "details": {
+            "seq": 5,
+            "expected": "sha256:ee545a4fe6dd0d4be08dae34e4a389bf625ae2864a6820f9fefa5f2e4843e155",
+            "provided": "sha256:8b8d458249918658ec21c6736115a68149b312c4d6384db2f4ff6427b110bc20"
+          }
+        },
+        "http_status": 422
+      },
+      "OPS-BAD-GAP": {
+        "verdict": "rejected",
+        "import_key": "OPS-BAD-GAP",
+        "vehicle_id": "VH-01",
+        "received_at": "2026-10-03T09:12:42+00:00",
+        "error": {
+          "code": "AUDIT_SEQ_GAP",
+          "message": "序号跳跃：6 之后出现 8，批次内序号必须连续",
+          "details": {
+            "expected": 7,
+            "got": 8
+          }
+        },
+        "http_status": 422
+      },
+      "OPS-BAD-DUP": {
+        "verdict": "rejected",
+        "import_key": "OPS-BAD-DUP",
+        "vehicle_id": "VH-01",
+        "received_at": "2026-10-03T09:12:42+00:00",
+        "error": {
+          "code": "AUDIT_DUPLICATE",
+          "message": "序号 1 已存在于车辆 VH-01 的证据链（重复事件）",
+          "details": {
+            "seq": 1
+          }
+        },
+        "http_status": 409
+      },
+      "OPS-BAD-ORPHAN": {
+        "verdict": "rejected",
+        "import_key": "OPS-BAD-ORPHAN",
+        "vehicle_id": "VH-01",
+        "received_at": "2026-10-03T09:12:42+00:00",
+        "error": {
+          "code": "AUDIT_PARENT_MISSING",
+          "message": "序号 5 声明的父摘要与链上第 4 号不符（父事件缺失）",
+          "details": {
+            "seq": 5,
+            "expected_parent": "sha256:d7d6ccc0edaa7e8ac4b8b9d0a028c1b1b837934b1a3ffb4dedd00ecd453d85a7",
+            "provided_parent": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        "http_status": 422
+      }
+    },
+    "checkpoints": {
+      "CP-0001": {
+        "checkpoint_id": "CP-0001",
+        "vehicle_id": "VH-01",
+        "seq": 2,
+        "note": "监管抽查确认",
+        "created_by": "auditor",
+        "created_at": "2026-10-03T09:12:41+00:00",
+        "last_digest": "sha256:3516a842826de4434b13b6353c4eaf29eaf45234fe92b0f517d6466ed503d422",
+        "ctx": {
+          "snapshot_id": "S-0001",
+          "version": {
+            "version": "north=2/south=1",
+            "descriptor_hash": "sha256:ea46194920352b089731cd3d03baf3c6bde0f883236dea52770135a7caa74605",
+            "base": {
+              "north": {
+                "release_id": "REL-0002",
+                "generation": 2
+              },
+              "south": {
+                "release_id": "REL-0001",
+                "generation": 1
+              }
+            },
+            "patches": []
+          },
+          "tiles": {
+            "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+            "A01": "sha256:406900a37cc808cc39ce1df6c60d27c5bf581bf6a10f5e56f1ee3a818c079372",
+            "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+          },
+          "route": [
+            {
+              "kind": "lane",
+              "tile": "A00",
+              "lane": "lcw",
+              "speed": 60,
+              "from_tile": "A00",
+              "from_node": "w",
+              "to_tile": "A00",
+              "to_node": "c"
+            },
+            {
+              "kind": "lane",
+              "tile": "A00",
+              "lane": "lce",
+              "speed": 60,
+              "from_tile": "A00",
+              "from_node": "c",
+              "to_tile": "A00",
+              "to_node": "e"
+            },
+            {
+              "kind": "seam",
+              "from_tile": "A00",
+              "from_node": "e",
+              "to_tile": "A01",
+              "to_node": "w",
+              "via_port": "A00:pe~A01:pw"
+            },
+            {
+              "kind": "lane",
+              "tile": "A01",
+              "lane": "lcw",
+              "speed": 60,
+              "from_tile": "A01",
+              "from_node": "w",
+              "to_tile": "A01",
+              "to_node": "c"
+            },
+            {
+              "kind": "lane",
+              "tile": "A01",
+              "lane": "lcs",
+              "speed": 60,
+              "from_tile": "A01",
+              "from_node": "c",
+              "to_tile": "A01",
+              "to_node": "s"
+            },
+            {
+              "kind": "seam",
+              "from_tile": "A01",
+              "from_node": "s",
+              "to_tile": "B01",
+              "to_node": "n",
+              "via_port": "A01:ps~B01:pn"
+            },
+            {
+              "kind": "lane",
+              "tile": "B01",
+              "lane": "lcn",
+              "speed": 60,
+              "from_tile": "B01",
+              "from_node": "n",
+              "to_tile": "B01",
+              "to_node": "c"
+            },
+            {
+              "kind": "lane",
+              "tile": "B01",
+              "lane": "lce",
+              "speed": 60,
+              "from_tile": "B01",
+              "from_node": "c",
+              "to_tile": "B01",
+              "to_node": "e"
+            }
+          ],
+          "to_node": "B01/e",
+          "progress": {
+            "step": 1,
+            "state": "at_node"
+          },
+          "closures": {}
+        },
+        "ctx_digest": "sha256:1e69491f5c69b29e0c11b54db092908893faab843a608bca6cb13593f653b63c"
+      },
+      "CP-0002": {
+        "checkpoint_id": "CP-0002",
+        "vehicle_id": "VH-01",
+        "seq": 4,
+        "note": "分支基准",
+        "created_by": "auditor",
+        "created_at": "2026-10-03T09:12:41+00:00",
+        "last_digest": "sha256:d7d6ccc0edaa7e8ac4b8b9d0a028c1b1b837934b1a3ffb4dedd00ecd453d85a7",
+        "ctx": {
+          "snapshot_id": "S-0002",
+          "version": {
+            "version": "north=2/south=1+P-0001[p100]",
+            "descriptor_hash": "sha256:5032668ec77344ea5b26bb0bdbf1f32518d5e2385ff7657b214c056f98d3902a",
+            "base": {
+              "north": {
+                "release_id": "REL-0002",
+                "generation": 2
+              },
+              "south": {
+                "release_id": "REL-0001",
+                "generation": 1
+              }
+            },
+            "patches": [
+              {
+                "patch_id": "P-0001",
+                "priority": 100,
+                "scope": {
+                  "tiles": {
+                    "A00": [
+                      "lce"
+                    ]
+                  }
+                },
+                "reason": "K12 事故临时管制",
+                "content_hash": "sha256:bad9547394286d4a9c853b542fb06ae3cbe99a7778fb5fbddd165d36b8e30f33",
+                "activated_at": "2026-10-03T09:12:41+00:00"
+              }
+            ]
+          },
+          "tiles": {
+            "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+            "B00": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17",
+            "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+          },
+          "route": [
+            {
+              "kind": "lane",
+              "tile": "A00",
+              "lane": "lcs",
+              "speed": 60,
+              "from_tile": "A00",
+              "from_node": "c",
+              "to_tile": "A00",
+              "to_node": "s"
+            },
+            {
+              "kind": "seam",
+              "from_tile": "A00",
+              "from_node": "s",
+              "to_tile": "B00",
+              "to_node": "n",
+              "via_port": "A00:ps~B00:pn"
+            },
+            {
+              "kind": "lane",
+              "tile": "B00",
+              "lane": "lcn",
+              "speed": 60,
+              "from_tile": "B00",
+              "from_node": "n",
+              "to_tile": "B00",
+              "to_node": "c"
+            },
+            {
+              "kind": "lane",
+              "tile": "B00",
+              "lane": "lce",
+              "speed": 60,
+              "from_tile": "B00",
+              "from_node": "c",
+              "to_tile": "B00",
+              "to_node": "e"
+            },
+            {
+              "kind": "seam",
+              "from_tile": "B00",
+              "from_node": "e",
+              "to_tile": "B01",
+              "to_node": "w",
+              "via_port": "B00:pe~B01:pw"
+            },
+            {
+              "kind": "lane",
+              "tile": "B01",
+              "lane": "lcw",
+              "speed": 60,
+              "from_tile": "B01",
+              "from_node": "w",
+              "to_tile": "B01",
+              "to_node": "c"
+            },
+            {
+              "kind": "lane",
+              "tile": "B01",
+              "lane": "lce",
+              "speed": 60,
+              "from_tile": "B01",
+              "from_node": "c",
+              "to_tile": "B01",
+              "to_node": "e"
+            }
+          ],
+          "to_node": "B01/e",
+          "progress": {
+            "step": 0,
+            "state": "at_node"
+          },
+          "closures": {
+            "A00": {
+              "lce": {
+                "closed": true,
+                "patch_id": "P-0001",
+                "reason": "K12 事故临时管制"
+              }
+            }
+          }
+        },
+        "ctx_digest": "sha256:e8544ab8a068061d6424384eba4ef4882138277d560e84cc89d4a069bbd1dfec"
+      }
+    },
+    "branches": {
+      "BR-0001": {
+        "branch_id": "BR-0001",
+        "checkpoint_id": "CP-0002",
+        "vehicle_id": "VH-01",
+        "base_seq": 4,
+        "scenario": {
+          "type": "patch_revoke",
+          "patch_id": "P-0001"
+        },
+        "created_by": "auditor",
+        "created_at": "2026-10-03T09:12:41+00:00",
+        "result": {
+          "position": "A00/c",
+          "to_node": "B01/e",
+          "version_before": "north=2/south=1+P-0001[p100]",
+          "version_after": "north=2/south=1",
+          "tiles": {
+            "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+            "A01": "sha256:406900a37cc808cc39ce1df6c60d27c5bf581bf6a10f5e56f1ee3a818c079372",
+            "B00": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17",
+            "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+          },
+          "patches": [],
+          "reachable": true,
+          "route": [
+            {
+              "kind": "lane",
+              "tile": "A00",
+              "lane": "lce",
+              "speed": 60,
+              "from_tile": "A00",
+              "from_node": "c",
+              "to_tile": "A00",
+              "to_node": "e"
+            },
+            {
+              "kind": "seam",
+              "from_tile": "A00",
+              "from_node": "e",
+              "to_tile": "A01",
+              "to_node": "w",
+              "via_port": "A00:pe~A01:pw"
+            },
+            {
+              "kind": "lane",
+              "tile": "A01",
+              "lane": "lcw",
+              "speed": 60,
+              "from_tile": "A01",
+              "from_node": "w",
+              "to_tile": "A01",
+              "to_node": "c"
+            },
+            {
+              "kind": "lane",
+              "tile": "A01",
+              "lane": "lcs",
+              "speed": 60,
+              "from_tile": "A01",
+              "from_node": "c",
+              "to_tile": "A01",
+              "to_node": "s"
+            },
+            {
+              "kind": "seam",
+              "from_tile": "A01",
+              "from_node": "s",
+              "to_tile": "B01",
+              "to_node": "n",
+              "via_port": "A01:ps~B01:pn"
+            },
+            {
+              "kind": "lane",
+              "tile": "B01",
+              "lane": "lcn",
+              "speed": 60,
+              "from_tile": "B01",
+              "from_node": "n",
+              "to_tile": "B01",
+              "to_node": "c"
+            },
+            {
+              "kind": "lane",
+              "tile": "B01",
+              "lane": "lce",
+              "speed": 60,
+              "from_tile": "B01",
+              "from_node": "c",
+              "to_tile": "B01",
+              "to_node": "e"
+            }
+          ],
+          "steps": 7,
+          "route_changed": true
+        }
+      },
+      "BR-0002": {
+        "branch_id": "BR-0002",
+        "checkpoint_id": "CP-0002",
+        "vehicle_id": "VH-01",
+        "base_seq": 4,
+        "scenario": {
+          "type": "version_switch",
+          "to": {
+            "regions": {
+              "north": 1
+            }
+          }
+        },
+        "created_by": "auditor",
+        "created_at": "2026-10-03T09:12:41+00:00",
+        "result": {
+          "position": "A00/c",
+          "to_node": "B01/e",
+          "version_before": "north=2/south=1+P-0001[p100]",
+          "version_after": "north=1/south=1+P-0001[p100]",
+          "tiles": {
+            "A00": "sha256:d3204f766864b6607a2c330342b9801c50454c74f1b90f23b4b5ec8afac2f45b",
+            "A01": "sha256:406900a37cc808cc39ce1df6c60d27c5bf581bf6a10f5e56f1ee3a818c079372",
+            "B00": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17",
+            "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+          },
+          "patches": [
+            {
+              "patch_id": "P-0001",
+              "priority": 100,
+              "reason": "K12 事故临时管制"
+            }
+          ],
+          "reachable": true,
+          "route": [
+            {
+              "kind": "lane",
+              "tile": "A00",
+              "lane": "lcs",
+              "speed": 60,
+              "from_tile": "A00",
+              "from_node": "c",
+              "to_tile": "A00",
+              "to_node": "s"
+            },
+            {
+              "kind": "seam",
+              "from_tile": "A00",
+              "from_node": "s",
+              "to_tile": "B00",
+              "to_node": "n",
+              "via_port": "A00:ps~B00:pn"
+            },
+            {
+              "kind": "lane",
+              "tile": "B00",
+              "lane": "lcn",
+              "speed": 60,
+              "from_tile": "B00",
+              "from_node": "n",
+              "to_tile": "B00",
+              "to_node": "c"
+            },
+            {
+              "kind": "lane",
+              "tile": "B00",
+              "lane": "lce",
+              "speed": 60,
+              "from_tile": "B00",
+              "from_node": "c",
+              "to_tile": "B00",
+              "to_node": "e"
+            },
+            {
+              "kind": "seam",
+              "from_tile": "B00",
+              "from_node": "e",
+              "to_tile": "B01",
+              "to_node": "w",
+              "via_port": "B00:pe~B01:pw"
+            },
+            {
+              "kind": "lane",
+              "tile": "B01",
+              "lane": "lcw",
+              "speed": 60,
+              "from_tile": "B01",
+              "from_node": "w",
+              "to_tile": "B01",
+              "to_node": "c"
+            },
+            {
+              "kind": "lane",
+              "tile": "B01",
+              "lane": "lce",
+              "speed": 60,
+              "from_tile": "B01",
+              "from_node": "c",
+              "to_tile": "B01",
+              "to_node": "e"
+            }
+          ],
+          "steps": 7,
+          "route_changed": false
+        }
+      }
+    },
+    "archives": [
+      {
+        "archive_id": "AR-0001",
+        "kind": "branch_result",
+        "params": {
+          "branch_id": "BR-0001"
+        },
+        "created_by": "auditor",
+        "created_at": "2026-10-03T09:12:41+00:00",
+        "digest": "sha256:03845eee96ea9f8b2b9b5502365de498a50ff6b09e80eabb20e6b59d9feb2027",
+        "content": {
+          "branch_id": "BR-0001",
+          "checkpoint_id": "CP-0002",
+          "vehicle_id": "VH-01",
+          "base_seq": 4,
+          "scenario": {
+            "type": "patch_revoke",
+            "patch_id": "P-0001"
+          },
+          "created_by": "auditor",
+          "created_at": "2026-10-03T09:12:41+00:00",
+          "result": {
+            "position": "A00/c",
+            "to_node": "B01/e",
+            "version_before": "north=2/south=1+P-0001[p100]",
+            "version_after": "north=2/south=1",
+            "tiles": {
+              "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+              "A01": "sha256:406900a37cc808cc39ce1df6c60d27c5bf581bf6a10f5e56f1ee3a818c079372",
+              "B00": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17",
+              "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+            },
+            "patches": [],
+            "reachable": true,
+            "route": [
+              {
+                "kind": "lane",
+                "tile": "A00",
+                "lane": "lce",
+                "speed": 60,
+                "from_tile": "A00",
+                "from_node": "c",
+                "to_tile": "A00",
+                "to_node": "e"
+              },
+              {
+                "kind": "seam",
+                "from_tile": "A00",
+                "from_node": "e",
+                "to_tile": "A01",
+                "to_node": "w",
+                "via_port": "A00:pe~A01:pw"
+              },
+              {
+                "kind": "lane",
+                "tile": "A01",
+                "lane": "lcw",
+                "speed": 60,
+                "from_tile": "A01",
+                "from_node": "w",
+                "to_tile": "A01",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "A01",
+                "lane": "lcs",
+                "speed": 60,
+                "from_tile": "A01",
+                "from_node": "c",
+                "to_tile": "A01",
+                "to_node": "s"
+              },
+              {
+                "kind": "seam",
+                "from_tile": "A01",
+                "from_node": "s",
+                "to_tile": "B01",
+                "to_node": "n",
+                "via_port": "A01:ps~B01:pn"
+              },
+              {
+                "kind": "lane",
+                "tile": "B01",
+                "lane": "lcn",
+                "speed": 60,
+                "from_tile": "B01",
+                "from_node": "n",
+                "to_tile": "B01",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "B01",
+                "lane": "lce",
+                "speed": 60,
+                "from_tile": "B01",
+                "from_node": "c",
+                "to_tile": "B01",
+                "to_node": "e"
+              }
+            ],
+            "steps": 7,
+            "route_changed": true
+          }
+        }
+      },
+      {
+        "archive_id": "AR-0002",
+        "kind": "branch_result",
+        "params": {
+          "branch_id": "BR-0002"
+        },
+        "created_by": "auditor",
+        "created_at": "2026-10-03T09:12:41+00:00",
+        "digest": "sha256:bdc6ac50ad26f33e4d24d5647f369766dfa922ad6fb01c0c147c038d6d2f4c30",
+        "content": {
+          "branch_id": "BR-0002",
+          "checkpoint_id": "CP-0002",
+          "vehicle_id": "VH-01",
+          "base_seq": 4,
+          "scenario": {
+            "type": "version_switch",
+            "to": {
+              "regions": {
+                "north": 1
+              }
+            }
+          },
+          "created_by": "auditor",
+          "created_at": "2026-10-03T09:12:41+00:00",
+          "result": {
+            "position": "A00/c",
+            "to_node": "B01/e",
+            "version_before": "north=2/south=1+P-0001[p100]",
+            "version_after": "north=1/south=1+P-0001[p100]",
+            "tiles": {
+              "A00": "sha256:d3204f766864b6607a2c330342b9801c50454c74f1b90f23b4b5ec8afac2f45b",
+              "A01": "sha256:406900a37cc808cc39ce1df6c60d27c5bf581bf6a10f5e56f1ee3a818c079372",
+              "B00": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17",
+              "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+            },
+            "patches": [
+              {
+                "patch_id": "P-0001",
+                "priority": 100,
+                "reason": "K12 事故临时管制"
+              }
+            ],
+            "reachable": true,
+            "route": [
+              {
+                "kind": "lane",
+                "tile": "A00",
+                "lane": "lcs",
+                "speed": 60,
+                "from_tile": "A00",
+                "from_node": "c",
+                "to_tile": "A00",
+                "to_node": "s"
+              },
+              {
+                "kind": "seam",
+                "from_tile": "A00",
+                "from_node": "s",
+                "to_tile": "B00",
+                "to_node": "n",
+                "via_port": "A00:ps~B00:pn"
+              },
+              {
+                "kind": "lane",
+                "tile": "B00",
+                "lane": "lcn",
+                "speed": 60,
+                "from_tile": "B00",
+                "from_node": "n",
+                "to_tile": "B00",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "B00",
+                "lane": "lce",
+                "speed": 60,
+                "from_tile": "B00",
+                "from_node": "c",
+                "to_tile": "B00",
+                "to_node": "e"
+              },
+              {
+                "kind": "seam",
+                "from_tile": "B00",
+                "from_node": "e",
+                "to_tile": "B01",
+                "to_node": "w",
+                "via_port": "B00:pe~B01:pw"
+              },
+              {
+                "kind": "lane",
+                "tile": "B01",
+                "lane": "lcw",
+                "speed": 60,
+                "from_tile": "B01",
+                "from_node": "w",
+                "to_tile": "B01",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "B01",
+                "lane": "lce",
+                "speed": 60,
+                "from_tile": "B01",
+                "from_node": "c",
+                "to_tile": "B01",
+                "to_node": "e"
+              }
+            ],
+            "steps": 7,
+            "route_changed": false
+          }
+        }
+      },
+      {
+        "archive_id": "AR-0003",
+        "kind": "reconstruction",
+        "params": {
+          "vehicle_id": "VH-01",
+          "seq": 4
+        },
+        "created_by": "auditor",
+        "created_at": "2026-10-03T09:12:41+00:00",
+        "digest": "sha256:b8bc0d69115a0e26e5839fff16bdfa8ad6529ccec8897d944d63bab5d6f54a67",
+        "content": {
+          "vehicle_id": "VH-01",
+          "seq": 4,
+          "resumed_from_checkpoint": "CP-0002",
+          "checkpoint_seq": 4,
+          "applied_events": 0,
+          "event_digest": "sha256:d7d6ccc0edaa7e8ac4b8b9d0a028c1b1b837934b1a3ffb4dedd00ecd453d85a7",
+          "state": {
+            "snapshot_id": "S-0002",
+            "version": {
+              "version": "north=2/south=1+P-0001[p100]",
+              "descriptor_hash": "sha256:5032668ec77344ea5b26bb0bdbf1f32518d5e2385ff7657b214c056f98d3902a",
+              "base": {
+                "north": {
+                  "release_id": "REL-0002",
+                  "generation": 2
+                },
+                "south": {
+                  "release_id": "REL-0001",
+                  "generation": 1
+                }
+              },
+              "patches": [
+                {
+                  "patch_id": "P-0001",
+                  "priority": 100,
+                  "scope": {
+                    "tiles": {
+                      "A00": [
+                        "lce"
+                      ]
+                    }
+                  },
+                  "reason": "K12 事故临时管制",
+                  "content_hash": "sha256:bad9547394286d4a9c853b542fb06ae3cbe99a7778fb5fbddd165d36b8e30f33",
+                  "activated_at": "2026-10-03T09:12:41+00:00"
+                }
+              ]
+            },
+            "tiles": {
+              "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+              "B00": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17",
+              "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+            },
+            "tile_status": {
+              "A00": {
+                "hash": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+                "stored": true
+              },
+              "B00": {
+                "hash": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17",
+                "stored": true
+              },
+              "B01": {
+                "hash": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f",
+                "stored": true
+              }
+            },
+            "closures": {
+              "A00": {
+                "lce": {
+                  "closed": true,
+                  "patch_id": "P-0001",
+                  "reason": "K12 事故临时管制"
+                }
+              }
+            },
+            "route": [
+              {
+                "kind": "lane",
+                "tile": "A00",
+                "lane": "lcs",
+                "speed": 60,
+                "from_tile": "A00",
+                "from_node": "c",
+                "to_tile": "A00",
+                "to_node": "s"
+              },
+              {
+                "kind": "seam",
+                "from_tile": "A00",
+                "from_node": "s",
+                "to_tile": "B00",
+                "to_node": "n",
+                "via_port": "A00:ps~B00:pn"
+              },
+              {
+                "kind": "lane",
+                "tile": "B00",
+                "lane": "lcn",
+                "speed": 60,
+                "from_tile": "B00",
+                "from_node": "n",
+                "to_tile": "B00",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "B00",
+                "lane": "lce",
+                "speed": 60,
+                "from_tile": "B00",
+                "from_node": "c",
+                "to_tile": "B00",
+                "to_node": "e"
+              },
+              {
+                "kind": "seam",
+                "from_tile": "B00",
+                "from_node": "e",
+                "to_tile": "B01",
+                "to_node": "w",
+                "via_port": "B00:pe~B01:pw"
+              },
+              {
+                "kind": "lane",
+                "tile": "B01",
+                "lane": "lcw",
+                "speed": 60,
+                "from_tile": "B01",
+                "from_node": "w",
+                "to_tile": "B01",
+                "to_node": "c"
+              },
+              {
+                "kind": "lane",
+                "tile": "B01",
+                "lane": "lce",
+                "speed": 60,
+                "from_tile": "B01",
+                "from_node": "c",
+                "to_tile": "B01",
+                "to_node": "e"
+              }
+            ],
+            "progress": {
+              "step": 0,
+              "state": "at_node"
+            },
+            "position": "A00/c",
+            "to_node": "B01/e"
+          }
+        }
+      },
+      {
+        "archive_id": "AR-0004",
+        "kind": "chain",
+        "params": {
+          "vehicle_id": "VH-01",
+          "from_seq": 1,
+          "to_seq": 1000000000
+        },
+        "created_by": "auditor",
+        "created_at": "2026-10-03T09:12:41+00:00",
+        "digest": "sha256:80a12499e83e882eae9168fdb8b29d66d23adde77030cfd1070a6a20e90b101a",
+        "content": {
+          "vehicle_id": "VH-01",
+          "from_seq": 1,
+          "to_seq": 4,
+          "events": [
+            {
+              "seq": 1,
+              "source": "obu/VH-01",
+              "kind": "snapshot_pinned",
+              "ts": "2026-10-03T09:12:41+00:00",
+              "payload": {
+                "snapshot_id": "S-0001",
+                "version": {
+                  "version": "north=2/south=1",
+                  "descriptor_hash": "sha256:ea46194920352b089731cd3d03baf3c6bde0f883236dea52770135a7caa74605",
+                  "base": {
+                    "north": {
+                      "release_id": "REL-0002",
+                      "generation": 2
+                    },
+                    "south": {
+                      "release_id": "REL-0001",
+                      "generation": 1
+                    }
+                  },
+                  "patches": []
+                },
+                "tiles": {
+                  "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+                  "A01": "sha256:406900a37cc808cc39ce1df6c60d27c5bf581bf6a10f5e56f1ee3a818c079372",
+                  "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+                },
+                "route": [
+                  {
+                    "kind": "lane",
+                    "tile": "A00",
+                    "lane": "lcw",
+                    "speed": 60,
+                    "from_tile": "A00",
+                    "from_node": "w",
+                    "to_tile": "A00",
+                    "to_node": "c"
+                  },
+                  {
+                    "kind": "lane",
+                    "tile": "A00",
+                    "lane": "lce",
+                    "speed": 60,
+                    "from_tile": "A00",
+                    "from_node": "c",
+                    "to_tile": "A00",
+                    "to_node": "e"
+                  },
+                  {
+                    "kind": "seam",
+                    "from_tile": "A00",
+                    "from_node": "e",
+                    "to_tile": "A01",
+                    "to_node": "w",
+                    "via_port": "A00:pe~A01:pw"
+                  },
+                  {
+                    "kind": "lane",
+                    "tile": "A01",
+                    "lane": "lcw",
+                    "speed": 60,
+                    "from_tile": "A01",
+                    "from_node": "w",
+                    "to_tile": "A01",
+                    "to_node": "c"
+                  },
+                  {
+                    "kind": "lane",
+                    "tile": "A01",
+                    "lane": "lcs",
+                    "speed": 60,
+                    "from_tile": "A01",
+                    "from_node": "c",
+                    "to_tile": "A01",
+                    "to_node": "s"
+                  },
+                  {
+                    "kind": "seam",
+                    "from_tile": "A01",
+                    "from_node": "s",
+                    "to_tile": "B01",
+                    "to_node": "n",
+                    "via_port": "A01:ps~B01:pn"
+                  },
+                  {
+                    "kind": "lane",
+                    "tile": "B01",
+                    "lane": "lcn",
+                    "speed": 60,
+                    "from_tile": "B01",
+                    "from_node": "n",
+                    "to_tile": "B01",
+                    "to_node": "c"
+                  },
+                  {
+                    "kind": "lane",
+                    "tile": "B01",
+                    "lane": "lce",
+                    "speed": 60,
+                    "from_tile": "B01",
+                    "from_node": "c",
+                    "to_tile": "B01",
+                    "to_node": "e"
+                  }
+                ],
+                "to_node": "B01/e",
+                "closures": {}
+              },
+              "digest": "sha256:95a93b34b9b99f432632b4fce40859dd262b12f57a47820acb42b25deec67fd7",
+              "parent_digest": null
+            },
+            {
+              "seq": 2,
+              "source": "obu/VH-01",
+              "kind": "progress",
+              "ts": "2026-10-03T09:12:41+00:00",
+              "payload": {
+                "step": 1,
+                "state": "at_node"
+              },
+              "digest": "sha256:3516a842826de4434b13b6353c4eaf29eaf45234fe92b0f517d6466ed503d422",
+              "parent_digest": "sha256:95a93b34b9b99f432632b4fce40859dd262b12f57a47820acb42b25deec67fd7"
+            },
+            {
+              "seq": 3,
+              "source": "obu/VH-01",
+              "kind": "patch_notice",
+              "ts": "2026-10-03T09:12:41+00:00",
+              "payload": {
+                "patch_id": "P-0001",
+                "action": "activated",
+                "closures": {
+                  "A00": {
+                    "lce": {
+                      "reason": "K12 事故临时管制"
+                    }
+                  }
+                }
+              },
+              "digest": "sha256:b5e9af8224e53ac9f759c604b7f64126b19f1a88db8e8a25b951ebaad724efce",
+              "parent_digest": "sha256:3516a842826de4434b13b6353c4eaf29eaf45234fe92b0f517d6466ed503d422"
+            },
+            {
+              "seq": 4,
+              "source": "obu/VH-01",
+              "kind": "version_adopted",
+              "ts": "2026-10-03T09:12:41+00:00",
+              "payload": {
+                "snapshot_id": "S-0002",
+                "version": {
+                  "version": "north=2/south=1+P-0001[p100]",
+                  "descriptor_hash": "sha256:5032668ec77344ea5b26bb0bdbf1f32518d5e2385ff7657b214c056f98d3902a",
+                  "base": {
+                    "north": {
+                      "release_id": "REL-0002",
+                      "generation": 2
+                    },
+                    "south": {
+                      "release_id": "REL-0001",
+                      "generation": 1
+                    }
+                  },
+                  "patches": [
+                    {
+                      "patch_id": "P-0001",
+                      "priority": 100,
+                      "scope": {
+                        "tiles": {
+                          "A00": [
+                            "lce"
+                          ]
+                        }
+                      },
+                      "reason": "K12 事故临时管制",
+                      "content_hash": "sha256:bad9547394286d4a9c853b542fb06ae3cbe99a7778fb5fbddd165d36b8e30f33",
+                      "activated_at": "2026-10-03T09:12:41+00:00"
+                    }
+                  ]
+                },
+                "tiles": {
+                  "A00": "sha256:9492083f2d659a5707194f6818f0e6a9e4c27c0c488c94592fcc482adacb57bc",
+                  "B00": "sha256:228b9c65da21e70affca98113d2572f6594e47e9081b7ca57c05eeec28c7ee17",
+                  "B01": "sha256:01deaf5cf81d30d695d7e0725869c41eee2ec396aed50ef3c700dd4f7b9fbd5f"
+                },
+                "route": [
+                  {
+                    "kind": "lane",
+                    "tile": "A00",
+                    "lane": "lcs",
+                    "speed": 60,
+                    "from_tile": "A00",
+                    "from_node": "c",
+                    "to_tile": "A00",
+                    "to_node": "s"
+                  },
+                  {
+                    "kind": "seam",
+                    "from_tile": "A00",
+                    "from_node": "s",
+                    "to_tile": "B00",
+                    "to_node": "n",
+                    "via_port": "A00:ps~B00:pn"
+                  },
+                  {
+                    "kind": "lane",
+                    "tile": "B00",
+                    "lane": "lcn",
+                    "speed": 60,
+                    "from_tile": "B00",
+                    "from_node": "n",
+                    "to_tile": "B00",
+                    "to_node": "c"
+                  },
+                  {
+                    "kind": "lane",
+                    "tile": "B00",
+                    "lane": "lce",
+                    "speed": 60,
+                    "from_tile": "B00",
+                    "from_node": "c",
+                    "to_tile": "B00",
+                    "to_node": "e"
+                  },
+                  {
+                    "kind": "seam",
+                    "from_tile": "B00",
+                    "from_node": "e",
+                    "to_tile": "B01",
+                    "to_node": "w",
+                    "via_port": "B00:pe~B01:pw"
+                  },
+                  {
+                    "kind": "lane",
+                    "tile": "B01",
+                    "lane": "lcw",
+                    "speed": 60,
+                    "from_tile": "B01",
+                    "from_node": "w",
+                    "to_tile": "B01",
+                    "to_node": "c"
+                  },
+                  {
+                    "kind": "lane",
+                    "tile": "B01",
+                    "lane": "lce",
+                    "speed": 60,
+                    "from_tile": "B01",
+                    "from_node": "c",
+                    "to_tile": "B01",
+                    "to_node": "e"
+                  }
+                ],
+                "to_node": "B01/e",
+                "closures": {
+                  "A00": {
+                    "lce": {
+                      "closed": true,
+                      "patch_id": "P-0001",
+                      "reason": "K12 事故临时管制"
+                    }
+                  }
+                }
+              },
+              "digest": "sha256:d7d6ccc0edaa7e8ac4b8b9d0a028c1b1b837934b1a3ffb4dedd00ecd453d85a7",
+              "parent_digest": "sha256:b5e9af8224e53ac9f759c604b7f64126b19f1a88db8e8a25b951ebaad724efce"
+            }
+          ],
+          "head_digest": "sha256:d7d6ccc0edaa7e8ac4b8b9d0a028c1b1b837934b1a3ffb4dedd00ecd453d85a7"
+        }
+      }
+    ],
+    "seq": {
+      "checkpoint": 2,
+      "branch": 2,
+      "archive": 4
+    }
   }
 }

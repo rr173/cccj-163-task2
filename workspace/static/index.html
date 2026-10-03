@@ -26,6 +26,7 @@
   <button data-tab="review" class="tab active">🗺️ 地图审查</button>
   <button data-tab="patches" class="tab">🚨 封路补丁</button>
   <button data-tab="routes" class="tab">🚗 路线复现</button>
+  <button data-tab="audit" class="tab">🧾 监管审计</button>
   <span class="spacer"></span>
   <button id="refreshBtn" class="ghost">↻ 刷新</button>
 </nav>
@@ -126,6 +127,81 @@
       <div class="panel">
         <h2>快照清单</h2>
         <div id="snapshotList" class="cardlist"></div>
+      </div>
+    </div>
+  <!-- ===================== AUDIT ===================== -->
+  <section id="tab-audit" class="tabpane">
+    <div class="grid2">
+      <div class="panel">
+        <h2>导入车辆运行事件 <span class="hint">带序号 / 来源 / 摘要校验；整批原子接受或拒绝；
+          同一导入键返回首次判定</span></h2>
+        <div class="audit-import-form">
+          <label>导入键（幂等）<input id="auditImportKey" placeholder="OPS-2026-10-03-001"/></label>
+          <label>车辆 <input id="auditVehicle" value="VH-01"/></label>
+          <label>事件 JSON 数组（seq / source / kind / ts / payload / digest / parent_digest）
+            <textarea id="auditEventsJson" rows="7" spellcheck="false"
+              placeholder='[{"seq":1,"source":"obu/VH-01","kind":"snapshot_pinned",...}]'></textarea>
+          </label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="auditImportBtn" class="primary">校验并导入</button>
+            <button id="auditSampleBtn" class="ghost">填入示例批次（取自车辆快照链）</button>
+          </div>
+        </div>
+        <div id="auditImportResult" class="report" style="margin-top:10px"></div>
+      </div>
+      <div class="panel">
+        <h2>导入记录</h2>
+        <div id="auditImportList" class="cardlist" style="max-height:220px"></div>
+        <h2 style="margin-top:14px">证据链事件 <span class="hint" id="auditEventHint"></span></h2>
+        <div id="auditEventList" class="events" style="max-height:260px"></div>
+      </div>
+    </div>
+
+    <div class="grid2 wide-left">
+      <div class="panel">
+        <h2>时刻空间状态重建 <span id="auditViewLabel" class="hint"></span></h2>
+        <div class="audit-moment-bar">
+          <label>车辆 <select id="auditMomentVehicle"></select></label>
+          <label>序号 <input id="auditMomentSeq" type="number" value="1" min="1"/></label>
+          <button id="auditReconstructBtn" class="primary">重建该时刻</button>
+          <button id="auditCheckpointBtn" class="ghost">✔ 确认为检查点</button>
+        </div>
+        <div class="mapwrap"><svg id="auditMap" viewBox="0 0 1200 1200"
+          preserveAspectRatio="xMidYMid meet"></svg></div>
+        <div id="auditMomentInfo" class="report" style="margin-top:10px"></div>
+      </div>
+      <div class="panel">
+        <h2>版本描述 / 瓦片摘要 / 行驶步骤</h2>
+        <div id="auditMomentDetail" class="report"></div>
+        <h2 style="margin-top:14px">已确认检查点 <span class="hint">长序列从检查点续算</span></h2>
+        <div id="auditCheckpointList" class="cardlist" style="max-height:200px"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h2>隔离分支演算 <span class="hint">从已确认检查点出发，仅演算一次假设，
+          不触碰线上代际 / 车辆记录 / 事件链</span></h2>
+        <label>检查点 <select id="auditBranchCp"></select></label>
+        <label>场景
+          <select id="auditBranchType">
+            <option value="version_switch">版本切换（保持当时管制）</option>
+            <option value="patch_revoke">道路管制撤销</option>
+          </select></label>
+        <label id="auditBranchTargetWrap">目标代际（如 north=1，多区域逗号分隔）
+          <input id="auditBranchTarget" placeholder="north=1"/></label>
+        <label id="auditBranchPatchWrap" style="display:none">撤销的补丁号
+          <input id="auditBranchPatch" placeholder="P-0001"/></label>
+        <button id="auditBranchBtn" class="primary warn">演算分支</button>
+        <div id="auditBranchList" class="cardlist" style="margin-top:12px;max-height:300px"></div>
+      </div>
+      <div class="panel">
+        <h2>审计档案 <span class="hint">查询 / 分支 / 导出的唯一产物</span></h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <button id="auditExportMomentBtn" class="ghost">导出当前时刻重建</button>
+          <button id="auditExportChainBtn" class="ghost">导出证据链</button>
+        </div>
+        <div id="auditArchiveList" class="cardlist" style="max-height:340px"></div>
       </div>
     </div>
   </section>

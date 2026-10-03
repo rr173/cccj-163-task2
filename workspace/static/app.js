@@ -10,6 +10,11 @@ const state = {
   viewMode: "published", viewRef: null,
   selectedCandidate: null, selectedSnapshot: null,
   fullSnapshot: null,
+  audit: {
+    vehicle: "VH-01", seq: 1,
+    imports: [], events: [], checkpoints: [], branches: [], archives: [],
+    recon: null, view: null,
+  },
 };
 
 async function api(path, opts = {}) {
@@ -49,6 +54,8 @@ async function refreshAll() {
   await Promise.all([
     loadStatus(), loadCandidates(), loadReleases(),
     loadEvents(), loadPatches(), loadSnapshots(),
+    loadAuditImports(), loadAuditEvents(), loadAuditCheckpoints(),
+    loadAuditBranches(), loadAuditArchives(),
   ]);
   await refreshView();
 }
@@ -183,11 +190,15 @@ function renderCandidates() {
 function renderMap() {
   const svg = $("#map");
   if (!state.view) { svg.innerHTML = ""; $("#viewLabel").textContent = "（无视图数据）"; return; }
-  const v = state.view;
-  $("#viewLabel").textContent = "· " + v.version_label;
+  $("#viewLabel").textContent = "· " + state.view.version_label;
+  drawMap(svg, state.view, {
+    labelsOn: $("#toggleLabels").checked,
+    corridorsOn: $("#toggleCorridors").checked,
+  });
+}
+
+function drawMap(svg, v, { labelsOn = true, corridorsOn = true } = {}) {
   const P = id => v.nodes.find(n => n.id === id);
-  const labelsOn = $("#toggleLabels").checked;
-  const corridorsOn = $("#toggleCorridors").checked;
 
   let html = "";
   // tiles
@@ -350,6 +361,13 @@ function populateVehicles() {
   const cur = sel.value || "VH-01";
   sel.innerHTML = [...ids].map(id => `<option>${esc(id)}</option>`).join("");
   sel.value = cur;
+  const asel = $("#auditMomentVehicle");
+  if (asel) {
+    const acur = asel.value || state.audit.vehicle;
+    asel.innerHTML = [...ids].map(id => `<option>${esc(id)}</option>`).join("");
+    asel.value = ids.has(acur) ? acur : "VH-01";
+    state.audit.vehicle = asel.value;
+  }
 }
 async function populateRouteNodes() {
   if (!state.view) return;
@@ -476,6 +494,9 @@ function switchTab(name) {
     state.viewRef = state.selectedCandidate;
     refreshView();
   }
+  if (name === "audit") {
+    refreshAuditAll().catch(showError);
+  }
 }
 $$(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
 
@@ -540,5 +561,270 @@ $("#syncBtn").addEventListener("click", async () => {
 });
 
 $("#refreshBtn").addEventListener("click", () => refreshAll().catch(showError));
+
+// ============================================================ AUDIT =========
+const A = state.audit;
+const shortHash = h => String(h || "").replace("sha256:", "").slice(0, 12);
+
+async function loadAuditImports() {
+  ({ imports: A.imports } = await api("/audit/imports"));
+  renderAuditImports();
+}
+async function loadAuditEvents() {
+  ({ events: A.events } = await api(
+    `/audit/events?vehicle_id=${encodeURIComponent(A.vehicle)}`));
+  renderAuditEvents();
+}
+async function loadAuditCheckpoints() {
+  ({ checkpoints: A.checkpoints } = await api(
+    `/audit/checkpoints?vehicle_id=${encodeURIComponent(A.vehicle)}`));
+  renderAuditCheckpoints();
+}
+async function loadAuditBranches() {
+  ({ branches: A.branches } = await api("/audit/branches"));
+  renderAuditBranches();
+}
+async function loadAuditArchives() {
+  ({ archives: A.archives } = await api("/audit/archives"));
+  renderAuditArchives();
+}
+async function refreshAuditAll() {
+  await Promise.all([loadAuditImports(), loadAuditEvents(), loadAuditCheckpoints(),
+    loadAuditBranches(), loadAuditArchives()]);
+}
+
+function renderAuditImports() {
+  $("#auditImportList").innerHTML = A.imports.map(v => {
+    const ok = v.verdict === "accepted";
+    return `<div class="card"><div class="row1">
+      <span class="id">${esc(v.import_key)}</span>
+      <span class="badge ${ok ? "b-published" : "b-rejected"}">${ok ? "accepted" : "rejected"}</span></div>
+      <div class="note">${ok
+        ? `车辆 ${esc(v.vehicle_id)} · 接受 ${v.accepted_events} 条（序号 ${v.first_seq}–${v.last_seq}）`
+        : `车辆 ${esc(v.vehicle_id)} · <span class="err-code">[${esc(v.error.code)}]</span> ${esc(v.error.message)}`}</div>
+      <div class="meta">${ok ? "链头摘要 " + esc(shortHash(v.chain_head_digest)) + " · " : ""}${esc(v.received_at.replace("T", " ").slice(5, 19))}</div>
+    </div>`;
+  }).join("") || `<div class="hint">暂无导入记录</div>`;
+}
+
+function renderAuditEvents() {
+  $("#auditEventHint").textContent = A.events.length
+    ? `车辆 ${A.vehicle} · 链头序号 ${A.events[A.events.length - 1].seq}` : "";
+  $("#auditEventList").innerHTML = A.events.map(e => `
+    <div class="ev"><span class="eid">#${e.seq}</span>
+      <span class="typ">${esc(e.kind)}</span>
+      <span>${esc(e.source)} · 摘要 ${esc(shortHash(e.digest))} ← 父 ${
+        e.parent_digest ? esc(shortHash(e.parent_digest)) : "GENESIS"}</span></div>`
+  ).join("") || `<div class="hint">该车辆暂无证据链——先导入事件批次</div>`;
+}
+
+function renderAuditCheckpoints() {
+  $("#auditCheckpointList").innerHTML = A.checkpoints.map(c => `
+    <div class="card" data-seq="${c.seq}">
+      <div class="row1"><span class="id">${esc(c.checkpoint_id)}</span>
+        <span class="badge b-submitted">seq ${c.seq}</span></div>
+      <div class="note">${esc(c.note || "（无备注）")} · ${esc(c.version || "无版本")}</div>
+      <div class="meta">状态摘要 ${esc(shortHash(c.ctx_digest))} · 链摘要 ${esc(shortHash(c.last_digest))}</div>
+    </div>`).join("") || `<div class="hint">暂无检查点——重建一个时刻后可确认</div>`;
+  $$("#auditCheckpointList .card").forEach(c => c.addEventListener("click", () => {
+    $("#auditMomentSeq").value = c.dataset.seq;
+    reconstructMoment().catch(showError);
+  }));
+  const sel = $("#auditBranchCp");
+  const cur = sel.value;
+  sel.innerHTML = A.checkpoints.map(c =>
+    `<option value="${esc(c.checkpoint_id)}">${esc(c.checkpoint_id)} · ${esc(c.vehicle_id)} @ 序号 ${c.seq}</option>`).join("");
+  if (cur) sel.value = cur;
+}
+
+async function reconstructMoment() {
+  A.vehicle = $("#auditMomentVehicle").value;
+  A.seq = Number($("#auditMomentSeq").value || 1);
+  const [recon, view] = await Promise.all([
+    api(`/audit/reconstruct?vehicle_id=${encodeURIComponent(A.vehicle)}&seq=${A.seq}`),
+    api(`/view?mode=audit&ref=${encodeURIComponent(A.vehicle)}@${A.seq}`),
+  ]);
+  A.recon = recon; A.view = view;
+  $("#auditViewLabel").textContent = "· " + view.version_label;
+  drawMap($("#auditMap"), view, { labelsOn: true, corridorsOn: true });
+  renderAuditMoment();
+}
+
+function renderAuditMoment() {
+  const r = A.recon;
+  if (!r) { $("#auditMomentInfo").innerHTML = ""; $("#auditMomentDetail").innerHTML = ""; return; }
+  const st = r.state;
+  $("#auditMomentInfo").innerHTML = `
+    <div class="note-item">重建序号 <b>${r.seq}</b> · 事件摘要 <span class="err-code" style="color:var(--accent)">${esc(shortHash(r.event_digest))}</span> ·
+      ${r.resumed_from_checkpoint
+        ? `从持久检查点 <b>${esc(r.resumed_from_checkpoint)}</b>（序号 ${r.checkpoint_seq}）续算，应用 ${r.applied_events} 条事件`
+        : `从链首回放 ${r.applied_events} 条事件`} · 当前位置 <b>${esc(st.position || "—")}</b></div>
+    ${(A.view.missing_tiles || []).length ? `<div class="err-item">瓦片内容缺失：${
+      A.view.missing_tiles.map(t => esc(t.tile_id)).join(", ")}</div>` : ""}`;
+  const v = st.version || {};
+  const closures = Object.entries(st.closures).flatMap(([t, ls]) =>
+    Object.entries(ls).map(([l, i]) => `${t}/${l}（${i.patch_id}）`));
+  $("#auditMomentDetail").innerHTML = `
+    <div class="ok-item" style="border-left-color:var(--purple)">
+      版本描述 <b>${esc(v.version || "（无版本证据）")}</b><br>
+      <span class="hint">descriptor_hash: ${esc(v.descriptor_hash || "—")}</span><br>
+      <span class="hint">基线: ${Object.entries(v.base || {}).map(([k, b]) =>
+        `${k}#${b.generation}(${b.release_id})`).join("，") || "—"}${
+        (v.patches || []).length ? " · 补丁: " + v.patches.map(p => esc(p.patch_id)).join(", ") : ""}</span></div>
+    <div class="note-item">瓦片摘要（内容寻址）<br>${Object.entries(st.tile_status).map(([t, x]) =>
+      `<span class="hint">${esc(t)} = ${esc(shortHash(x.hash))}${x.stored ? "" : " ⚠内容缺失"}</span>`).join("<br>") || "—"}</div>
+    ${closures.length ? `<div class="adv warn" style="margin-bottom:7px">道路管制：${closures.map(esc).join("，")}</div>` : ""}
+    <div class="note-item">行驶步骤（进度 step=${st.progress.step}/${st.route.length} ${esc(st.progress.state)}，目的地 ${esc(st.to_node || "—")}）</div>
+    <div class="trip" style="margin-top:6px">${st.route.map((s2, i) => {
+      const text = s2.kind === "seam"
+        ? `接缝 ${s2.from_tile}:${s2.from_node} → ${s2.to_tile}:${s2.to_node}`
+        : `车道 ${s2.tile}/${s2.lane} ${s2.from_node}→${s2.to_node}`;
+      const cls = i < st.progress.step ? "done" : i === st.progress.step ? "now" : "";
+      return `<div class="step ${cls}"><span class="bar">${
+        i < st.progress.step ? "✓" : i === st.progress.step ? "▶" : ""}</span>${esc(text)}</div>`;
+    }).join("") || '<span class="hint">该时刻无路线证据</span>'}</div>`;
+}
+
+function renderAuditBranches() {
+  $("#auditBranchList").innerHTML = A.branches.map(b => {
+    const r = b.result;
+    const sc = b.scenario.type === "version_switch"
+      ? `版本切换 → ${Object.entries(b.scenario.to.regions).map(([k, g]) => `${k}=${g}`).join(",")}`
+      : `撤销管制 ${esc(b.scenario.patch_id)}`;
+    return `<div class="card"><div class="row1">
+      <span class="id">${esc(b.branch_id)}</span>
+      <span class="badge ${r.reachable ? "b-published" : "b-rejected"}">${r.reachable ? "可达" : "不可达"}</span></div>
+      <div class="note">${sc} · 基于 ${esc(b.checkpoint_id)}（${esc(b.vehicle_id)} @ 序号 ${b.base_seq}）</div>
+      <div class="meta">${esc(r.version_before || "—")} → ${esc(r.version_after || "—")}</div>
+      <div class="meta">位置 ${esc(r.position)} → ${esc(r.to_node)} · ${r.steps} 步${
+        r.route_changed ? " · 路线有变化" : " · 路线不变"} · 已存档 ${esc(b.archive_id || "")}</div>
+      ${r.steps ? `<details><summary class="hint">演算路线</summary><div class="trip">${
+        r.route.map(s2 => `<div class="step"><span class="bar"></span>${esc(s2.kind === "seam"
+          ? `接缝 ${s2.from_tile}:${s2.from_node} → ${s2.to_tile}:${s2.to_node}`
+          : `车道 ${s2.tile}/${s2.lane} ${s2.from_node}→${s2.to_node}`)}</div>`).join("")}</div></details>` : ""}
+    </div>`;
+  }).join("") || `<div class="hint">暂无分支——先确认检查点再演算</div>`;
+}
+
+function renderAuditArchives() {
+  $("#auditArchiveList").innerHTML = A.archives.map(a => `
+    <div class="card"><div class="row1"><span class="id">${esc(a.archive_id)}</span>
+      <span class="badge b-proposed">${esc(a.kind)}</span></div>
+      <div class="meta">摘要 ${esc(shortHash(a.digest))} · ${esc(a.created_at.replace("T", " ").slice(5, 19))}</div>
+      <div class="meta">${esc(JSON.stringify(a.params))}</div>
+      <div class="actions"><button class="ok" data-aid="${esc(a.archive_id)}">查看档案</button></div>
+      <pre class="archive-body" style="display:none"></pre>
+    </div>`).join("") || `<div class="hint">暂无档案——分支演算或导出会产生新档案</div>`;
+  $$("#auditArchiveList [data-aid]").forEach(btn => btn.addEventListener("click", async () => {
+    const pre = btn.closest(".card").querySelector(".archive-body");
+    if (pre.style.display === "none") {
+      const full = await api(`/audit/archives/${btn.dataset.aid}`);
+      pre.textContent = JSON.stringify(full.content, null, 2);
+      pre.style.display = "block";
+    } else pre.style.display = "none";
+  }));
+}
+
+// ---- audit wiring ----
+$("#auditMomentVehicle").addEventListener("change", async e => {
+  A.vehicle = e.target.value; A.recon = null;
+  await Promise.all([loadAuditEvents(), loadAuditCheckpoints()]);
+  renderAuditMoment();
+});
+$("#auditReconstructBtn").addEventListener("click", () =>
+  reconstructMoment().catch(showError));
+$("#auditCheckpointBtn").addEventListener("click", async () => {
+  const note = prompt("检查点备注（将持久化，供长序列续算）", "监管抽查确认");
+  if (note === null) return;
+  try {
+    const cp = await api("/audit/checkpoints", { method: "POST", body: {
+      vehicle_id: $("#auditMomentVehicle").value,
+      seq: Number($("#auditMomentSeq").value || 1), note } });
+    toast(cp.already_confirmed
+      ? `该时刻已确认过：${cp.checkpoint_id}` : `✓ 检查点 ${cp.checkpoint_id} 已确认并持久化`, "ok");
+    await Promise.all([loadAuditCheckpoints()]);
+  } catch (e) { showError(e); }
+});
+$("#auditSampleBtn").addEventListener("click", async () => {
+  const vid = $("#auditVehicle").value.trim() || "VH-01";
+  try {
+    const b = await api(`/audit/sample?vehicle_id=${encodeURIComponent(vid)}`);
+    $("#auditImportKey").value = b.import_key;
+    $("#auditEventsJson").value = JSON.stringify(b.events, null, 2);
+    toast(`已生成 ${b.events.length} 条示例事件（导入键 ${b.import_key}）`, "ok");
+  } catch (e) { showError(e); }
+});
+$("#auditImportBtn").addEventListener("click", async () => {
+  let events;
+  try { events = JSON.parse($("#auditEventsJson").value); }
+  catch (e) { toast("事件 JSON 解析失败: " + e.message, "error"); return; }
+  const body = { import_key: $("#auditImportKey").value.trim(),
+    vehicle_id: $("#auditVehicle").value.trim(), events };
+  const res = await fetch("/api/audit/imports", { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const d = await res.json().catch(() => ({}));
+  const el = $("#auditImportResult");
+  if (d.error && !d.verdict) {
+    el.innerHTML = `<div class="err-item"><span class="err-code">[${esc(d.error.code)}]</span> ${esc(d.error.message)}</div>`;
+  } else if (d.verdict === "accepted") {
+    el.innerHTML = `<div class="ok-item">✓ 接受 ${d.accepted_events} 条事件（序号 ${d.first_seq}–${d.last_seq}），
+      链头摘要 ${esc(shortHash(d.chain_head_digest))}${d.idempotent_replay ? " · <b>同一导入键，返回首次判定</b>" : ""}</div>`;
+    toast(`✓ 批次 ${d.import_key} 已接受`, "ok");
+  } else {
+    el.innerHTML = `<div class="err-item">✗ 批次被拒绝，未写入任何事件：
+      <span class="err-code">[${esc(d.error.code)}]</span> ${esc(d.error.message)}
+      ${d.idempotent_replay ? "<br><b>同一导入键，返回首次判定</b>" : ""}</div>`;
+    toast(`✗ 批次被拒绝：${d.error.code}`, "error");
+  }
+  await refreshAuditAll();
+});
+$("#auditBranchType").addEventListener("change", e => {
+  const vs = e.target.value === "version_switch";
+  $("#auditBranchTargetWrap").style.display = vs ? "" : "none";
+  $("#auditBranchPatchWrap").style.display = vs ? "none" : "";
+});
+$("#auditBranchBtn").addEventListener("click", async () => {
+  const cp = $("#auditBranchCp").value;
+  if (!cp) return toast("请先确认一个检查点", "error");
+  const type = $("#auditBranchType").value;
+  let scenario;
+  if (type === "version_switch") {
+    const regions = {};
+    $("#auditBranchTarget").value.split(",").forEach(p => {
+      const [r, g] = p.split("=");
+      if (r && g) regions[r.trim()] = Number(g);
+    });
+    if (!Object.keys(regions).length) return toast("请填写目标代际，如 north=1", "error");
+    scenario = { type, to: { regions } };
+  } else {
+    const pid = $("#auditBranchPatch").value.trim();
+    if (!pid) return toast("请填写要撤销的补丁号", "error");
+    scenario = { type, patch_id: pid };
+  }
+  try {
+    const b = await api("/audit/branches", { method: "POST",
+      body: { checkpoint_id: cp, scenario } });
+    toast(`✓ 分支 ${b.branch_id} 演算完成（${b.result.reachable ? "可达" : "不可达"}），已存为档案 ${b.archive_id}`, "ok");
+    await Promise.all([loadAuditBranches(), loadAuditArchives()]);
+  } catch (e) { showError(e); }
+});
+$("#auditExportMomentBtn").addEventListener("click", async () => {
+  try {
+    const a = await api("/audit/exports", { method: "POST", body: {
+      kind: "reconstruction",
+      params: { vehicle_id: $("#auditMomentVehicle").value,
+                seq: Number($("#auditMomentSeq").value || 1) } } });
+    toast(`✓ 时刻重建已导出为档案 ${a.archive_id}`, "ok");
+    await loadAuditArchives();
+  } catch (e) { showError(e); }
+});
+$("#auditExportChainBtn").addEventListener("click", async () => {
+  try {
+    const a = await api("/audit/exports", { method: "POST", body: {
+      kind: "chain", params: { vehicle_id: $("#auditMomentVehicle").value } } });
+    toast(`✓ 证据链已导出为档案 ${a.archive_id}`, "ok");
+    await loadAuditArchives();
+  } catch (e) { showError(e); }
+});
 
 refreshAll().catch(showError);

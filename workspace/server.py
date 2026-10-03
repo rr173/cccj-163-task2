@@ -21,7 +21,19 @@ Endpoints (all JSON under /api):
   POST /api/snapshots/{id}/complete
   GET  /api/vehicles/{id}
   GET  /api/vehicles/{id}/sync?last_event_id=N
-  GET  /api/view?mode=published|candidate|snapshot&ref=...
+  GET  /api/view?mode=published|candidate|snapshot|audit&ref=...
+Audit (read-only temporal evidence, /api/audit/*):
+  POST /api/audit/imports        import hash-chained event batch (idempotent key)
+  GET  /api/audit/imports        import verdicts
+  GET  /api/audit/events?vehicle_id=&from_seq=&to_seq=
+  GET  /api/audit/reconstruct?vehicle_id=&seq=
+  POST /api/audit/checkpoints    confirm persistent checkpoint {vehicle_id, seq}
+  GET  /api/audit/checkpoints?vehicle_id=
+  POST /api/audit/branches       isolated what-if from a checkpoint
+  GET  /api/audit/branches
+  POST /api/audit/exports        produce a new audit archive
+  GET  /api/audit/archives       · /api/audit/archives/{id}
+  GET  /api/audit/sample?vehicle_id=   valid sample batch (no persistence)
 Static UI served at /
 """
 
@@ -34,12 +46,14 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
+from audit import AuditEngine
 from engine import DomainError, MapEngine, short
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "mapstate.json")
 
 ENGINE = MapEngine(DATA_PATH)
+AUDIT = AuditEngine(ENGINE)
 
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -134,7 +148,23 @@ class Handler(BaseHTTPRequestHandler):
             "/api/patches": lambda: self._send_json(ENGINE.create_patch(body)),
             "/api/routes": lambda: self._send_json(ENGINE.create_route(body), 201),
             "/api/tiles": lambda: self._send_json(ENGINE.put_tile(body), 201),
+            "/api/audit/checkpoints": lambda: self._send_json(
+                AUDIT.create_checkpoint(body.get("vehicle_id"),
+                                        int(body.get("seq")),
+                                        body.get("note", ""),
+                                        body.get("created_by", "auditor")), 201),
+            "/api/audit/branches": lambda: self._send_json(
+                AUDIT.create_branch(body.get("checkpoint_id"),
+                                    body.get("scenario") or {},
+                                    body.get("created_by", "auditor")), 201),
+            "/api/audit/exports": lambda: self._send_json(
+                AUDIT.export_archive(body.get("kind"),
+                                     body.get("params") or {},
+                                     body.get("created_by", "auditor")), 201),
         }
+        if path == "/api/audit/imports":
+            payload, status = AUDIT.import_batch(body)
+            return self._send_json(payload, status)
         if path in table:
             return table[path]()
         raise DomainError("NOT_FOUND", f"无此端点: POST {path}", 404)
@@ -150,6 +180,9 @@ class Handler(BaseHTTPRequestHandler):
         m = re.match(r"^/api/vehicles/([^/]+)$", path)
         if m:
             return self._send_json(ENGINE.vehicle_snapshots(m.group(1)))
+        m = re.match(r"^/api/audit/archives/([^/]+)$", path)
+        if m:
+            return self._send_json(AUDIT.get_archive(m.group(1)))
 
         table = {
             "/api/status": lambda: self._send_json(ENGINE.region_status()),
@@ -161,13 +194,39 @@ class Handler(BaseHTTPRequestHandler):
             "/api/corridors": lambda: self._send_json({"corridors": ENGINE.list_corridors()}),
             "/api/patches": lambda: self._send_json({"patches": ENGINE.list_patches()}),
             "/api/snapshots": lambda: self._send_json(self._all_snapshots()),
-            "/api/view": lambda: self._send_json(
-                ENGINE.describe_view(q.get("mode", ["published"])[0],
-                                     q.get("ref", [None])[0])),
+            "/api/view": lambda: self._send_json(self._view(q)),
+            "/api/audit/imports": lambda: self._send_json(
+                {"imports": AUDIT.list_imports()}),
+            "/api/audit/events": lambda: self._send_json({"events": AUDIT.list_events(
+                q.get("vehicle_id", ["VH-01"])[0],
+                int(q.get("from_seq", ["1"])[0]),
+                int(q.get("to_seq", ["1000000000"])[0]))}),
+            "/api/audit/reconstruct": lambda: self._send_json(AUDIT.reconstruct(
+                q.get("vehicle_id", [""])[0], int(q.get("seq", ["0"])[0]))),
+            "/api/audit/checkpoints": lambda: self._send_json(
+                {"checkpoints": AUDIT.list_checkpoints(q.get("vehicle_id", [None])[0])}),
+            "/api/audit/branches": lambda: self._send_json(
+                {"branches": AUDIT.list_branches()}),
+            "/api/audit/archives": lambda: self._send_json(
+                {"archives": AUDIT.list_archives()}),
+            "/api/audit/sample": lambda: self._send_json(AUDIT.build_sample_batch(
+                q.get("vehicle_id", ["VH-01"])[0],
+                q.get("import_key", [None])[0])),
         }
         if path in table:
             return table[path]()
         raise DomainError("NOT_FOUND", f"无此端点: GET {path}", 404)
+
+    def _view(self, q: dict):
+        mode = q.get("mode", ["published"])[0]
+        ref = q.get("ref", [None])[0]
+        if mode == "audit":
+            vid, _, seq = (ref or "").rpartition("@")
+            if not vid or not seq.isdigit():
+                raise DomainError("BAD_REQUEST",
+                                  "审计视图 ref 格式为 <vehicle_id>@<seq>", 400)
+            return AUDIT.describe_audit_view(vid, int(seq))
+        return ENGINE.describe_view(mode, ref)
 
     def _all_snapshots(self) -> dict:
         out = []

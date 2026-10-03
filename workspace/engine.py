@@ -1078,14 +1078,21 @@ class MapEngine:
                 tile_map = {tid: s["tiles"][h] for tid, h in snap["tiles"].items()}
                 overlays = snap["overlays"]
                 version_label = snap["version"]["version"]
+                route = {"steps": snap["route"], "progress": snap["progress"],
+                         "status": snap["status"], "from_node": snap["from_node"],
+                         "to_node": snap["to_node"],
+                         "parent_snapshot_id": snap.get("parent_snapshot_id")}
             else:
                 eff = self.resolve_effective(s)
                 tile_map = {tid: s["tiles"][h] for tid, h in eff["tiles"].items()}
                 overlays = eff["overlays"]
                 version_label = eff["version"]
-            return self._render_view(s, tile_map, overlays, errors, mode, ref, version_label)
+                route = None
+            return self._render_view(s, tile_map, overlays, errors, mode, ref,
+                                     version_label, route=route)
 
-    def _render_view(self, s, tile_map, overlays, errors, mode, ref, version_label) -> dict:
+    def _render_view(self, s, tile_map, overlays, errors, mode, ref,
+                     version_label, route=None) -> dict:
         tiles_out, nodes_out, lanes_out, seams_out = [], [], [], []
         for tid, t in sorted(tile_map.items()):
             bounds = t.get("bounds")
@@ -1146,14 +1153,6 @@ class MapEngine:
                 polyline.append({"start": a, "steps": seg})
             corridors.append({"corridor_id": cor["corridor_id"], "name": cor.get("name", ""),
                               "ok": ok, "segments": polyline})
-
-        route = None
-        if mode == "snapshot":
-            snap = s["snapshots"][ref]
-            route = {"steps": snap["route"], "progress": snap["progress"],
-                     "status": snap["status"], "from_node": snap["from_node"],
-                     "to_node": snap["to_node"],
-                     "parent_snapshot_id": snap.get("parent_snapshot_id")}
 
         return {"mode": mode, "ref": ref, "version_label": version_label,
                 "tiles": tiles_out, "nodes": nodes_out, "lanes": lanes_out,
