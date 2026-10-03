@@ -221,3 +221,43 @@ footer summary { cursor: pointer; color: var(--muted); padding: 10px; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.error { border-color: var(--red); }
 .toast.ok { border-color: var(--green); }
+
+/* ============================================================ audit ====== */
+.audit-banner {
+  background: linear-gradient(120deg, #241a3d, #16203a);
+  border: 1px solid var(--purple); border-radius: 10px;
+  padding: 10px 16px; margin-bottom: 14px; font-size: 13px; line-height: 1.6;
+}
+.audit-actions { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin: 8px 0; }
+.audit-actions label { margin: 0; flex: 1; min-width: 160px; }
+.audit-actions input, .audit-actions select { margin-top: 4px; }
+textarea {
+  width: 100%; background: var(--panel2); border: 1px solid var(--line);
+  color: var(--text); border-radius: 8px; padding: 8px 10px; font-family: monospace;
+  font-size: 12px; margin-top: 5px;
+}
+.audit-archives { max-height: 180px; overflow-y: auto; font-family: monospace;
+  font-size: 11.5px; }
+.audit-archives .ar { display: flex; gap: 10px; padding: 3px 0; border-bottom: 1px solid var(--line); }
+.audit-archives .ar .aid { color: var(--purple); min-width: 56px; }
+.audit-archives .ar .k { color: var(--accent); min-width: 150px; }
+.audit-archives .ar .ts { color: var(--muted); }
+.audit-state { background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px; font-size: 12.5px; }
+.audit-state .kv { display: grid; grid-template-columns: 110px 1fr; gap: 4px 10px;
+  margin: 4px 0; }
+.audit-state .kv .k { color: var(--muted); }
+.audit-state .kv .v { font-family: monospace; word-break: break-all; }
+.audit-state .ok { color: var(--green); }
+.audit-state .bad { color: var(--red); }
+.audit-steps { margin-top: 10px; max-height: 220px; overflow-y: auto;
+  font-family: monospace; font-size: 12px; }
+.audit-steps .st { padding: 3px 0; border-bottom: 1px dashed var(--line); }
+.audit-steps .st.done { color: var(--muted); }
+.audit-steps .st.now { color: var(--amber); font-weight: 700; }
+#auditMap { width: 100%; height: 460px; display: block; }
+.cp-chip { display: inline-block; border: 1px solid var(--green); color: var(--green);
+  border-radius: 12px; padding: 1px 9px; font-size: 11px; margin: 2px 4px 2px 0;
+  cursor: pointer; }
+.cp-chip:hover { background: #122820; }
+.branch-card .dif { color: var(--muted); font-size: 11.5px; margin-top: 4px; }

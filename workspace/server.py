@@ -22,6 +22,18 @@ Endpoints (all JSON under /api):
   GET  /api/vehicles/{id}
   GET  /api/vehicles/{id}/sync?last_event_id=N
   GET  /api/view?mode=published|candidate|snapshot&ref=...
+
+Regulatory audit (read-only over live state; appends only to data/audit.json):
+  POST /api/audit/template            (read-only signed demo-chain authoring)
+  POST /api/audit/vehicle-events      (read-only sign a live vehicle chain)
+  GET  /api/audit/imports             POST /api/audit/imports
+  POST /api/audit/imports/{key}/append
+  GET  /api/audit/imports/{key}       GET .../checkpoints  POST .../checkpoints
+  GET|POST /api/audit/imports/{key}/query?seq=|ts=
+  GET  /api/audit/imports/{key}/branches   POST /api/audit/imports/{key}/branches
+  GET  /api/audit/branches/{id}
+  GET|POST /api/audit/exports
+  GET  /api/audit/archives
 Static UI served at /
 """
 
@@ -35,11 +47,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 from engine import DomainError, MapEngine, short
+from audit import AuditEngine
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "mapstate.json")
+AUDIT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "audit.json")
 
 ENGINE = MapEngine(DATA_PATH)
+# audit subsystem: separate append-only store; ENGINE is only ever read by it
+AUDIT = AuditEngine(AUDIT_PATH, ENGINE)
 
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -129,6 +145,41 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send_json(ENGINE.complete_snapshot(sid))
             return self._send_json(ENGINE.adopt_reroute(sid))
 
+        # ---------------- regulatory audit (read-only over live state) --------
+        if path == "/api/audit/imports":
+            verdict = AUDIT.import_events(body)
+            # a rejected chain is still recorded (verdict-once) but answers 422
+            return self._send_json(
+                verdict, 200 if verdict.get("idempotent") else
+                (422 if verdict["status"] == "rejected" else 201))
+        if path == "/api/audit/template":
+            # read-only evidence authoring aid; writes no archive
+            return self._send_json(AUDIT.build_template_events(body))
+        if path == "/api/audit/vehicle-events":
+            # read-only: export one live vehicle's snapshot chain as signed events
+            return self._send_json(AUDIT.build_vehicle_events(body))
+        m = re.match(r"^/api/audit/imports/([^/]+)/append$", path)
+        if m:
+            return self._send_json(AUDIT.append_events(m.group(1),
+                                                       body.get("events", [])), 201)
+        m = re.match(r"^/api/audit/imports/([^/]+)/checkpoints$", path)
+        if m:
+            return self._send_json(AUDIT.confirm_checkpoint(
+                m.group(1), int(body.get("seq")), body.get("note", ""),
+                body.get("confirmed_by", "auditor")), 201)
+        m = re.match(r"^/api/audit/imports/([^/]+)/query$", path)
+        if m:
+            return self._send_json(AUDIT.query_state(
+                m.group(1), body.get("seq"), body.get("ts")), 201)
+        m = re.match(r"^/api/audit/imports/([^/]+)/branches$", path)
+        if m:
+            return self._send_json(AUDIT.create_branch(m.group(1), body), 201)
+        if path == "/api/audit/exports":
+            key = body.get("import_key")
+            if not key:
+                raise DomainError("BAD_REQUEST", "import_key 必填", 400)
+            return self._send_json(AUDIT.create_export(key, body), 201)
+
         table = {
             "/api/candidates": lambda: self._send_json(ENGINE.list_candidates()),
             "/api/patches": lambda: self._send_json(ENGINE.create_patch(body)),
@@ -150,6 +201,35 @@ class Handler(BaseHTTPRequestHandler):
         m = re.match(r"^/api/vehicles/([^/]+)$", path)
         if m:
             return self._send_json(ENGINE.vehicle_snapshots(m.group(1)))
+
+        # -------- regulatory audit (all of these only append audit archives) ---
+        if path == "/api/audit/imports":
+            return self._send_json({"imports": AUDIT.list_imports()})
+        if path == "/api/audit/archives":
+            return self._send_json(
+                {"archives": AUDIT.list_archives(int(q.get("limit", ["100"])[0]))})
+        if path == "/api/audit/exports":
+            return self._send_json({"exports": AUDIT.list_exports(
+                q.get("import_key", [None])[0])})
+        m = re.match(r"^/api/audit/branches/([^/]+)$", path)
+        if m:
+            return self._send_json(AUDIT.get_branch(m.group(1), True))
+        m = re.match(r"^/api/audit/imports/([^/]+)$", path)
+        if m:
+            return self._send_json(AUDIT.get_import(m.group(1)))
+        m = re.match(r"^/api/audit/imports/([^/]+)/checkpoints$", path)
+        if m:
+            return self._send_json(
+                {"checkpoints": AUDIT.list_checkpoints(m.group(1))})
+        m = re.match(r"^/api/audit/imports/([^/]+)/branches$", path)
+        if m:
+            return self._send_json({"branches": AUDIT.list_branches(m.group(1))})
+        m = re.match(r"^/api/audit/imports/([^/]+)/query$", path)
+        if m:
+            seq = q.get("seq", [None])[0]
+            ts = q.get("ts", [None])[0]
+            return self._send_json(AUDIT.query_state(
+                m.group(1), int(seq) if seq is not None else None, ts), 201)
 
         table = {
             "/api/status": lambda: self._send_json(ENGINE.region_status()),

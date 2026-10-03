@@ -26,6 +26,7 @@
   <button data-tab="review" class="tab active">🗺️ 地图审查</button>
   <button data-tab="patches" class="tab">🚨 封路补丁</button>
   <button data-tab="routes" class="tab">🚗 路线复现</button>
+  <button data-tab="audit" class="tab">⚖ 时序审计</button>
   <span class="spacer"></span>
   <button id="refreshBtn" class="ghost">↻ 刷新</button>
 </nav>
@@ -126,6 +127,86 @@
       <div class="panel">
         <h2>快照清单</h2>
         <div id="snapshotList" class="cardlist"></div>
+      </div>
+    </div>
+  </section>
+  <!-- ===================== AUDIT ===================== -->
+  <section id="tab-audit" class="tabpane">
+    <div class="audit-banner">
+      <b>⚖ 面向监管审计的只读时序证据查询。</b>
+      查询 / 分支 / 导出只会在审计档案（data/audit.json）中追加记录，
+      绝不改变线上代际、车辆当前记录或原有事件链。
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <h2>① 导入车辆运行事件 <span class="hint">序号 · 来源 · 摘要校验 · 父链</span></h2>
+        <div class="audit-import">
+          <div class="audit-actions">
+            <button id="auditGenBtn" class="ghost">从线上车辆快照链签名（只读）</button>
+            <select id="auditGenVehicle"></select>
+            <button id="auditGenTemplateBtn" class="ghost">按当前线上版本生成样例链</button>
+          </div>
+          <label>导入键 import_key（同一键永远返回首次判定）
+            <input id="auditImportKey" placeholder="如 EV-VH-01-20261003"/></label>
+          <label>事件 JSON（可粘贴运维提供的已签名事件数组）
+            <textarea id="auditEvents" rows="7"
+              placeholder='[{"seq":1,"ts":...,"source":"ops/...","type":"route_pinned","payload":{...},"parent_digest":null,"digest":"sha256:..."}]'></textarea>
+          </label>
+          <div class="audit-actions">
+            <button id="auditImportBtn" class="primary">导入并判定</button>
+            <button id="auditAppendBtn" class="ghost">从头部检查点续算</button>
+          </div>
+          <div id="auditImportResult" class="report"></div>
+        </div>
+        <h2 style="margin-top:16px">审计档案（append-only）</h2>
+        <div id="auditArchives" class="audit-archives"></div>
+      </div>
+      <div class="panel">
+        <h2>已导入证据链</h2>
+        <div id="auditImportList" class="cardlist"></div>
+        <div id="auditImportDetail" class="report" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="grid2 wide-left">
+      <div class="panel">
+        <h2>② 指定时刻的空间状态重建 <span id="auditViewLabel" class="hint"></span></h2>
+        <div class="audit-actions">
+          <label style="margin:0">证据链 <select id="auditSel"></select></label>
+          <label style="margin:0">按事件序号
+            <input id="auditSeq" type="number" min="1" style="width:90px" placeholder="seq"/></label>
+          <button id="auditQueryBtn" class="primary">重建该时刻</button>
+          <button id="auditConfirmBtn" class="ghost">✓ 确认当前序号为检查点</button>
+        </div>
+        <div id="auditStatePanel" class="audit-state">
+          <span class="hint">选择证据链并输入事件序号后重建。</span>
+        </div>
+        <div class="mapwrap" style="margin-top:12px">
+          <svg id="auditMap" viewBox="0 0 1200 1200" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>③ 从已确认检查点建立隔离分支</h2>
+        <p class="hint">每个分支只演算一次假设：版本切换 或 撤销一条道路管制；
+          演算结果只写入审计档案。</p>
+        <label>检查点序号
+          <input id="auditBranchSeq" type="number" min="1" placeholder="已确认的 seq"/></label>
+        <div class="audit-actions">
+          <label style="margin:0">版本切换 →
+            <select id="auditReleaseSel"></select></label>
+          <button id="auditSwitchBtn" class="ghost">演算版本切换</button>
+        </div>
+        <div class="audit-actions">
+          <label style="margin:0">撤销管制
+            <input id="auditPatchInput" placeholder="如 P-0001" style="width:120px"/></label>
+          <button id="auditRevokeBtn" class="ghost">演算撤销管制</button>
+        </div>
+        <div id="auditBranchResult" class="report"></div>
+        <h2 style="margin-top:14px">本证据链的分支</h2>
+        <div id="auditBranchList" class="cardlist"></div>
+        <h2 style="margin-top:14px">④ 导出审计档案</h2>
+        <button id="auditExportBtn" class="primary">导出证据包（事件+检查点+分支）</button>
+        <div id="auditExportResult" class="report" style="margin-top:8px"></div>
       </div>
     </div>
   </section>
